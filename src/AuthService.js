@@ -1,4 +1,3 @@
-// AuthService.js
 import axios from 'axios';
 
 class AuthService {

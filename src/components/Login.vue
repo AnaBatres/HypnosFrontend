@@ -1,6 +1,5 @@
 <template>
   <div>
-
     <!-- Formulario -->
     <div class="container">
       <div class="row">
@@ -8,38 +7,37 @@
           <div class="card border-0 shadow rounded-3 my-5">
             <div class="card-body p-4 p-sm-5">
               <h1 class="card-title text-center mb-5 fw-bold fs-3">HYPNOS</h1>
-              <form>
+              <form @submit.prevent="login">
                 <div class="form-floating mb-3">
-                  <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
+                  <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com"
+                    v-model="email" required>
                   <label for="floatingInput">Email</label>
                 </div>
                 <div class="form-floating mb-3">
-                  <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+                  <input type="password" class="form-control" id="floatingPassword" placeholder="Password"
+                    v-model="password" required>
                   <label for="floatingPassword">Contraseña</label>
                 </div>
-
                 <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" value="" id="rememberPasswordCheck">
-                  <label class="form-check-label" for="rememberPasswordCheck">
-                    Recordar contraseña
-                  </label>
+                  <input class="form-check-input" type="checkbox" id="rememberPasswordCheck" v-model="rememberPassword">
+                  <label class="form-check-label" for="rememberPasswordCheck">Recordar contraseña</label>
                 </div>
                 <div class="d-grid">
                   <button class="btn btn-primary btn-login text-uppercase fw-bold" type="submit">Entrar</button>
                 </div>
                 <hr class="my-4">
                 <div class="d-grid mb-2">
-                  <button class="btn btn-google btn-login text-uppercase fw-bold" type="submit">
+                  <button class="btn btn-google btn-login text-uppercase fw-bold" type="button">
                     <i class="fab fa-google me-2"></i> Iniciar sesión con Google
                   </button>
                 </div>
                 <div class="d-grid">
-                  <button class="btn btn-facebook btn-login text-uppercase fw-bold" type="submit">
+                  <button class="btn btn-facebook btn-login text-uppercase fw-bold" type="button">
                     <i class="fab fa-facebook-f me-2"></i> Iniciar sesión con Facebook
                   </button>
                 </div>
                 <div class="text-center mt-3">
-                  <p class="mb-0">¿No tienes cuenta? <RouterLink to="/" class="fw-bold">Regístrate</RouterLink></p>
+                  <p class="mb-0">¿No tienes cuenta? <router-link to="/" class="fw-bold">Regístrate</router-link></p>
                 </div>
               </form>
             </div>
@@ -48,18 +46,19 @@
       </div>
     </div>
   </div>
-
 </template>
 
 <script>
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
 export default {
   name: 'Login',
   data() {
     return {
       email: '',
-      password: ''
+      password: '',
+      rememberPassword: false
     };
   },
   methods: {
@@ -69,17 +68,35 @@ export default {
           email: this.email,
           password: this.password
         });
+
+        // Extraer el token de la respuesta del servidor
         const token = response.data;
-        localStorage.setItem('token', token);
+
+        // Almacenar el token en una cookie
+        Cookies.set('token', token, { expires: this.rememberPassword ? 7 : null }); // Expira en 7 días si se selecciona "Recordar contraseña"
+
+        // Redireccionar al perfil del usuario
         this.$router.push('/profile');
       } catch (error) {
         console.error('Error al iniciar sesión:', error);
-        // Mostrar un mensaje de error al usuario (opcional)
+        // Imprimir el error completo en la consola del navegador
+        console.error('Detalles del error:', error.response);
+        // Si el error es debido a credenciales incorrectas
+        if (error.response.status === 403) {
+          alert('Correo electrónico o contraseña incorrectos.');
+        } else {
+          // Si el error no es debido a credenciales incorrectas
+          alert('Error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.');
+        }
       }
     }
   }
 };
 </script>
+
+
+
+
 
 <style>
 body {

@@ -6,26 +6,32 @@
         <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
           <div class="card border-0 shadow rounded-3 my-5">
             <div class="card-body p-4 p-sm-5">
-              <h3 class="card-title text-center mb-5 fw-light fs-5">Regístrate en <h2>HYPNOS</h2> para compartir tus sueños con amigos.</h3>
+              <h3 class="card-title text-center mb-5 fw-light fs-5">Regístrate en <h2>HYPNOS</h2> para compartir tus
+                sueños con amigos.</h3>
               <form @submit.prevent="register">
                 <div class="form-floating mb-3">
-                  <input type="text" class="form-control" id="floatingFirstName" placeholder="Nombre" v-model="firstname" required>
+                  <input type="text" class="form-control" id="floatingFirstName" placeholder="Nombre"
+                    v-model="firstname" required>
                   <label for="floatingFirstName">Nombre</label>
                 </div>
                 <div class="form-floating mb-3">
-                  <input type="text" class="form-control" id="floatingLastName" placeholder="Apellido" v-model="lastname" required>
+                  <input type="text" class="form-control" id="floatingLastName" placeholder="Apellido"
+                    v-model="lastname" required>
                   <label for="floatingLastName">Apellido</label>
                 </div>
                 <div class="form-floating mb-3">
-                  <input type="text" class="form-control" id="floatingAlias" placeholder="Alias" v-model="alias" required>
+                  <input type="text" class="form-control" id="floatingAlias" placeholder="Alias" v-model="alias"
+                    required>
                   <label for="floatingAlias">Nombre de usuario</label>
                 </div>
                 <div class="form-floating mb-3">
-                  <input type="email" class="form-control" id="floatingEmail" placeholder="name@example.com" v-model="email" required>
+                  <input type="email" class="form-control" id="floatingEmail" placeholder="name@example.com"
+                    v-model="email" required>
                   <label for="floatingEmail">Email</label>
                 </div>
                 <div class="form-floating mb-3">
-                  <input type="password" class="form-control" id="floatingPassword" placeholder="Contraseña" v-model="password" required>
+                  <input type="password" class="form-control" id="floatingPassword" placeholder="Contraseña"
+                    v-model="password" required>
                   <label for="floatingPassword">Contraseña</label>
                 </div>
                 <div class="d-grid">
@@ -43,7 +49,8 @@
                   </button>
                 </div>
                 <div class="text-center mt-3">
-                  <p class="mb-0">¿Ya tienes cuenta? <RouterLink to="/login" class="fw-bold">Iniciar Sesión</RouterLink></p>
+                  <p class="mb-0">¿Ya tienes cuenta? <RouterLink to="/login" class="fw-bold">Iniciar Sesión</RouterLink>
+                  </p>
                 </div>
               </form>
             </div>
@@ -70,15 +77,15 @@ export default {
   methods: {
     async register() {
       try {
-        const response = await axios.post('http://localhost:8080/api/auth/signup', {
+        await axios.post('http://localhost:8080/api/auth/signup', {
           email: this.email,
           firstname: this.firstname,
           lastname: this.lastname,
-          alias: this.alias,  // Asegúrate de incluir el alias en el cuerpo de la solicitud
+          alias: this.alias,
           password: this.password
         });
-        console.log(response.data);
-        alert('Usuario registrado exitosamente');
+        console.log('Registro exitoso.'); // Imprime un mensaje de éxito en la consola
+        this.$router.push('/'); // Redirige a la página de inicio u otra página después del registro
       } catch (error) {
         if (error.response) {
           console.error('Error al registrar usuario:', error.response.data);

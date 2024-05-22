@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- Navbar de la red social -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container">
         <a class="navbar-brand" href="#">HYPNOS</a>
@@ -11,17 +11,19 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav me-auto">
             <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="#">Inicio</a>
+              <a class="nav-link" aria-current="page" href="#"><i class="bi bi-house-fill text-white"></i></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Explorar</a>
+              <a class="nav-link" href="#"><i class="bi bi-compass text-white"></i></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Notificaciones</a>
+              <a class="nav-link" href="#"><i class="bi bi-bell text-white"></i></a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Mensajes</a>
-            </li>
+            <RouterLink to="/create-publication">
+              <li class="nav-item">
+                <a class="nav-link"><i class="bi bi-cloud-upload text-white"></i></a>
+              </li>
+            </RouterLink>
           </ul>
           <form class="d-flex">
             <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Buscar">
@@ -31,12 +33,14 @@
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
                 aria-expanded="false">
-                <i class="bi bi-person-circle"></i> Usuario
+                <i class="bi bi-person-circle text-white"></i> Usuario
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                <li><a class="dropdown-item" href="#">Perfil</a></li>
+                <RouterLink to="/profile"><li><a class="dropdown-item">Perfil</a></li></RouterLink>
                 <li><a class="dropdown-item" href="#">Configuración</a></li>
-                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <hr class="dropdown-divider">
+                </li>
                 <li><a class="dropdown-item" href="#">Cerrar sesión</a></li>
               </ul>
             </li>
@@ -45,44 +49,73 @@
       </div>
     </nav>
 
-    <!-- Contenido del perfil -->
-    <div class="container mt-5" v-if="user">
-      <div class="row">
-        <div class="col-md-4">
-          <img :src="avatarPreviewUrl || user.avatarUrl" alt="Avatar" class="img-fluid rounded-circle mb-3">
-          <input type="file" @change="handleFileUpload">
-          <button @click="setAsProfilePic" class="btn btn-primary mt-2">Establecer como foto de perfil</button>
+    <div class="profile-header">
+      <div class="profile-image">
+        <img :src="avatarPreviewUrl || 'https://via.placeholder.com/150'" alt="Profile Picture">
+      </div>
+      <div class="profile-info">
+        <h2>{{ user.name }}</h2>
+        <p>{{ '@' + user.username }}</p>
+      </div>
+    </div>
+  
+    <div class="container profile-content">
+      <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button" role="tab" aria-controls="posts" aria-selected="true">Publicaciones</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="about-tab" data-bs-toggle="tab" data-bs-target="#about" type="button" role="tab" aria-controls="about" aria-selected="false">Acerca de</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Configuración</button>
+        </li>
+      </ul>
+  
+      <div class="tab-content" id="profileTabsContent">
+        <div class="tab-pane fade show active" id="posts" role="tabpanel" aria-labelledby="posts-tab">
+          <div v-for="post in publications" :key="post.id" class="profile-post">
+            <div class="post-header">
+              <img :src="user.avatarUrl" alt="User Picture">
+              <div class="post-user">{{ user.name }}</div>
+              <div class="post-date">{{ post.date }}</div>
+            </div>
+            <div class="post-content">
+              <p>{{ post.content }}</p>
+            </div>
+            <div class="post-actions">
+              <button class="btn btn-outline-primary btn-sm"><i class="fas fa-thumbs-up"></i> Me gusta</button>
+              <button class="btn btn-outline-secondary btn-sm"><i class="fas fa-comment"></i> Comentar</button>
+              <button class="btn btn-outline-danger btn-sm"><i class="fas fa-share"></i> Compartir</button>
+            </div>
+          </div>
         </div>
-        <div class="col-md-8">
-          <h1>{{ user.username }}</h1>
-          <p>{{ user.bio }}</p>
+  
+        <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
+          <h4>Información Personal</h4>
+          <p>Nombre: {{ user.name }}</p>
+          <p>Email: {{ user.email }}</p>
+          <p>Ubicación: {{ user.location }}</p>
+          <p>Descripción: {{ user.bio }}</p>
+        </div>
+  
+        <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+          <h4>Configuración de la Cuenta</h4>
           <form @submit.prevent="updateProfile">
             <div class="mb-3">
-              <label for="email" class="form-label">Correo electrónico:</label>
-              <input type="email" class="form-control" id="email" v-model="user.email" required>
+              <label for="inputEmail" class="form-label">Email</label>
+              <input v-model="user.email" type="email" class="form-control" id="inputEmail" placeholder="name@example.com">
             </div>
             <div class="mb-3">
-              <label for="bio" class="form-label">Biografía:</label>
-              <textarea class="form-control" id="bio" v-model="user.bio" rows="3"></textarea>
+              <label for="inputPassword" class="form-label">Contraseña</label>
+              <input v-model="user.password" type="password" class="form-control" id="inputPassword" placeholder="Contraseña">
             </div>
             <div class="mb-3">
-              <label for="avatarUrl" class="form-label">URL del avatar:</label>
-              <input type="text" class="form-control" id="avatarUrl" v-model="user.avatarUrl">
+              <label for="inputAvatar" class="form-label">Foto de perfil</label>
+              <input @change="handleFileUpload" type="file" class="form-control" id="inputAvatar">
             </div>
-            <button type="submit" class="btn btn-primary">Actualizar perfil</button>
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
           </form>
-
-          <!-- Mostrar publicaciones del usuario -->
-          <div v-if="publications.length > 0">
-            <h2>Publicaciones:</h2>
-            <div v-for="publication in publications" :key="publication.id">
-              <h3>{{ publication.title }}</h3>
-              <p>{{ publication.content }}</p>
-            </div>
-          </div>
-          <div v-else>
-            <p>No hay publicaciones aún.</p>
-          </div>
         </div>
       </div>
     </div>
@@ -90,99 +123,140 @@
 </template>
 
 <script>
-import axios from 'axios';
-
 export default {
   data() {
     return {
-      user: null,
+      user: {
+        name: 'Juan Pérez',
+        username: 'juanperez',
+        email: 'juan.perez@example.com',
+        location: 'Ciudad, País',
+        bio: 'Esta es una breve descripción sobre Juan Pérez.',
+        avatarUrl: 'https://via.placeholder.com/150'
+      },
       avatar: null,
       avatarPreviewUrl: '',
-      publications: []
+      publications: [
+        {
+          id: 1,
+          content: 'Este es un ejemplo de publicación en la red social. Aquí puedes ver el contenido que el usuario ha compartido.',
+          date: 'Hace 2 horas'
+        },
+        {
+          id: 2,
+          content: 'Otra publicación de ejemplo. Esta es una publicación más reciente.',
+          date: 'Hace 1 hora'
+        }
+      ]
     };
   },
-  mounted() {
-    this.fetchUser();
-    this.fetchPublications();
-  },
   methods: {
-    async fetchUser() {
-      try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          const response = await axios.get('http://localhost:8080/api/profile/me', {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          this.user = response.data;
-        }
-      } catch (error) {
-        console.error('Error fetching user:', error);
-      }
-    },
-    async fetchPublications() {
-      try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          const response = await axios.get('http://localhost:8080/api/publications/by-user/me', {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          this.publications = response.data;
-        }
-      } catch (error) {
-        console.error('Error fetching publications:', error);
-      }
-    },
-    async updateProfile() {
-      try {
-        const formData = new FormData();
-        formData.append('email', this.user.email);
-        formData.append('bio', this.user.bio);
-        formData.append('avatar', this.avatar);
-
-        const token = localStorage.getItem('token');
-        if (token) {
-          const response = await axios.put('http://localhost:8080/api/profile/me', formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          });
-          this.user = response.data;
-          alert('Perfil actualizado exitosamente!');
-        }
-      } catch (error) {
-        console.error('Error updating profile:', error);
-      }
+    updateProfile() {
+      alert('Perfil actualizado exitosamente!');
     },
     handleFileUpload(event) {
       const file = event.target.files[0];
       this.avatar = file;
       this.avatarPreviewUrl = URL.createObjectURL(file);
-    },
-    async setAsProfilePic() {
-      try {
-        const formData = new FormData();
-        formData.append('avatar', this.avatar);
-
-        const token = localStorage.getItem('token');
-        if (token) {
-          const response = await axios.put('http://localhost:8080/api/profile/avatar', formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          });
-          this.user.avatarUrl = response.data.avatarUrl;
-          alert('Foto de perfil actualizada exitosamente!');
-        }
-      } catch (error) {
-        console.error('Error setting profile picture:', error);
-      }
     }
   }
 };
 </script>
+<style>
+    .profile-header {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      background-color: #007bff;
+      background: linear-gradient(to right, #0062E6, #33AEFF);
+    }
+
+    .profile-header .profile-image {
+      position: absolute;
+      bottom: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid white;
+      border-radius: 50%;
+    }
+
+    .profile-header .profile-image img {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+    }
+
+    .profile-header .profile-info {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      color: white;
+    }
+
+    .profile-header .profile-info h2 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .profile-header .profile-info p {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .profile-content {
+      margin-top: 60px;
+    }
+
+    .profile-content .nav-tabs .nav-link {
+      font-weight: bold;
+    }
+
+    .profile-content .tab-content {
+      margin-top: 20px;
+    }
+
+    .profile-post {
+      border: 1px solid #e1e1e1;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+
+    .profile-post .post-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .profile-post .post-header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
+    .profile-post .post-header .post-user {
+      font-weight: bold;
+    }
+
+    .profile-post .post-header .post-date {
+      margin-left: auto;
+      font-size: 12px;
+      color: gray;
+    }
+
+    .profile-post .post-content {
+      margin-top: 10px;
+    }
+
+    .profile-post .post-actions {
+      margin-top: 15px;
+    }
+
+    .profile-post .post-actions button {
+      margin-right: 10px;
+    }
+  </style>
