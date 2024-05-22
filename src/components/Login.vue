@@ -82,7 +82,7 @@ export default {
         // Imprimir el error completo en la consola del navegador
         console.error('Detalles del error:', error.response);
         // Si el error es debido a credenciales incorrectas
-        if (error.response.status === 403) {
+        if (error.response && error.response.status === 403) {
           alert('Correo electrónico o contraseña incorrectos.');
         } else {
           // Si el error no es debido a credenciales incorrectas
@@ -93,10 +93,6 @@ export default {
   }
 };
 </script>
-
-
-
-
 
 <style>
 body {
