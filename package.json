@@ -13,9 +13,11 @@
     "bootstrap": "^5.3.3",
     "js-cookie": "^3.0.5",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.2"
+    "vue-router": "^4.3.2",
+    "vuex": "^4.1.0"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@vitejs/plugin-vue": "^5.0.4",
     "vite": "^5.2.8",
     "vue-cli-plugin-vuetify": "~2.5.8"

@@ -63,6 +63,7 @@ export default {
   },
   methods: {
     async login() {
+      console.log('Intentando iniciar sesión...');
       try {
         const response = await axios.post('http://localhost:8080/api/auth/login', {
           email: this.email,
@@ -71,12 +72,14 @@ export default {
 
         // Extraer el token de la respuesta del servidor
         const token = response.data;
+        console.log('Token de autenticación obtenido:', token);
 
         // Almacenar el token en una cookie
         Cookies.set('token', token, { expires: this.rememberPassword ? 7 : null }); // Expira en 7 días si se selecciona "Recordar contraseña"
 
         // Redireccionar al perfil del usuario
         this.$router.push('/profile');
+        console.log('Redirigiendo al perfil del usuario...');
       } catch (error) {
         console.error('Error al iniciar sesión:', error);
         // Imprimir el error completo en la consola del navegador
@@ -93,6 +96,8 @@ export default {
   }
 };
 </script>
+
+
 
 <style>
 body {

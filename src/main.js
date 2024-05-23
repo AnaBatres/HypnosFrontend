@@ -3,6 +3,8 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import App from './App.vue';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import Cookies from 'js-cookie';
+
 
 // Componentes
 import Login from './components/Login.vue';
@@ -17,12 +19,12 @@ const routes = [
   { 
     path: '/profile', 
     component: Profile,
-    meta: { requiresAuth: true } 
+    meta: { requiresAuth: true } // Ruta protegida, requiere autenticación
   },
   { 
     path: '/create-publication', 
     component: CreatePublication,
-    meta: { requiresAuth: true } 
+    meta: { requiresAuth: true } // Ruta protegida, requiere autenticación
   },
 ];
 
@@ -33,9 +35,10 @@ const router = createRouter({
 });
 
 // Middleware para proteger rutas
+// Middleware para proteger rutas
 router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    const token = localStorage.getItem('token');
+    const token = Cookies.get('token');
     if (!token) {
       next('/login');
     } else {
@@ -45,6 +48,7 @@ router.beforeEach((to, from, next) => {
     next();
   }
 });
+
 
 // Creación de la aplicación de Vue y uso del enrutador
 const app = createApp(App);
