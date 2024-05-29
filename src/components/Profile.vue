@@ -91,7 +91,9 @@
                           </div>
                         </div>
                         <div>
-                          <button class="btn btn-outline-danger"><i class="bi bi-arrow-bar-up"></i> Compartir</button>
+                          <button class="btn btn-outline-danger me-2"><i class="bi bi-arrow-bar-up"></i> Compartir</button>
+                          <button class="btn btn-outline-danger me-2" @click="editPost(post)">Editar</button>
+                          <button class="btn btn-danger me-2" @click="deletePost(post.id)">Eliminar</button>
                         </div>
                       </div>
                     </div>
