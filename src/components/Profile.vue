@@ -3,7 +3,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container">
-        <a class="navbar-brand" href="#">HYPNOS</a>
+        <router-link to="/" class="navbar-brand">HYPNOS</router-link>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
           aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -11,19 +11,19 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav me-auto">
             <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="#"><i class="bi bi-house-fill text-white"></i></a>
+              <router-link to="/" class="nav-link" aria-current="page"><i
+                  class="bi bi-house-fill text-white"></i></router-link>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#"><i class="bi bi-compass text-white"></i></a>
+              <router-link to="/explore" class="nav-link"><i class="bi bi-compass text-white"></i></router-link>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#"><i class="bi bi-bell text-white"></i></a>
+              <router-link to="/notifications" class="nav-link"><i class="bi bi-bell text-white"></i></router-link>
             </li>
-            <RouterLink to="/create-publication">
-              <li class="nav-item">
-                <a class="nav-link"><i class="bi bi-cloud-upload text-white"></i></a>
-              </li>
-            </RouterLink>
+            <li class="nav-item">
+              <router-link to="/create-publication" class="nav-link"><i
+                  class="bi bi-cloud-upload text-white"></i></router-link>
+            </li>
           </ul>
           <form class="d-flex">
             <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Buscar">
@@ -33,13 +33,15 @@
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
                 aria-expanded="false">
-                <i class="bi bi-person-circle text-white"></i> {{ user.firstname }}
+                <i class="bi bi-person-circle text-white"></i> {{ user?.firstname || '' }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                <RouterLink to="/profile">
+                <router-link to="/profile">
                   <li><a class="dropdown-item">Perfil</a></li>
-                </RouterLink>
-                <li><a class="dropdown-item" href="#">Configuración</a></li>
+                </router-link>
+                <router-link to="/settings">
+                  <li><a class="dropdown-item">Configuración</a></li>
+                </router-link>
                 <li>
                   <hr class="dropdown-divider">
                 </li>
@@ -50,14 +52,13 @@
         </div>
       </div>
     </nav>
-
     <div class="profile-header">
       <div class="profile-image">
-        <img :src="avatarPreviewUrl || user.avatarUrl || 'https://via.placeholder.com/150'" alt="Profile Picture">
+        <img :src="avatarPreviewUrl || 'https://via.placeholder.com/150'" alt="Profile Picture">
       </div>
-      <div class="profile-info">
-        <h2>{{ user.firstname }}</h2>
-        <p>{{ '@' + user.username }}</p>
+      <div class="profile-info" v-if="user">
+        <h2>{{ user?.firstname || 'Usuario' }}</h2>
+        <p>{{ user?.alias || 'Alias' }}</p>
       </div>
     </div>
 
@@ -66,7 +67,6 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button"
             role="tab" aria-controls="posts" aria-selected="true">Publicaciones</button>
-          <UserPublications :userId="user.id" />
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="about-tab" data-bs-toggle="tab" data-bs-target="#about" type="button" role="tab"
@@ -80,30 +80,35 @@
 
       <div class="tab-content" id="profileTabsContent">
         <div class="tab-pane fade show active" id="posts" role="tabpanel" aria-labelledby="posts-tab">
-          <div v-for="post in publications" :key="post.id" class="profile-post">
-            <div class="post-header">
-              <img :src="user.avatarUrl" alt="User Picture">
-              <div class="post-user">{{ user.alias }}</div>
-              <div class="post-date">{{ post.date }}</div>
-            </div>
-
-            <div class="post-content">
-              <p>{{ post.content }}</p>
-            </div>
-            <div class="post-actions">
-              <button class="btn btn-outline-primary btn-sm"><i class="fas fa-thumbs-up"></i> Me gusta</button>
-              <button class="btn btn-outline-secondary btn-sm"><i class="fas fa-comment"></i> Comentar</button>
-              <button class="btn btn-outline-danger btn-sm"><i class="fas fa-share"></i> Compartir</button>
+          <div v-if="publications.length === 0" class="text-center mt-4">
+            <p>No hay publicaciones.</p>
+          </div>
+          <div v-else>
+            <div v-for="post in publications" :key="post.id" class="profile-post">
+              <div class="post-header">
+                <img :src="'https://via.placeholder.com/50'" alt="User Picture">
+                <div class="post-user" v-if="post.user">{{ post.user.alias || 'Desconocido' }}</div>
+                <div class="post-date" v-if="post.createdAt">
+                  {{ post.createdAt }}
+                </div>
+              </div>
+              <div class="post-content">
+                <p>{{ post.text }}</p>
+              </div>
+              <div class="post-actions">
+                <button class="btn btn-outline-primary btn-sm"><i class="fas fa-thumbs-up"></i> Me gusta</button>
+                <button class="btn btn-outline-secondary btn-sm"><i class="fas fa-comment"></i> Comentar</button>
+                <button class="btn btn-outline-danger btn-sm"><i class="fas fa-share"></i> Compartir</button>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
           <h4>Información Personal</h4>
-          <p>Nombre: {{ user.firstname }}</p>
-          <p>Apellido: {{ user.lastname }}</p>
-          <p>Email: {{ user.email }}</p>
-          <p>Descripción: {{ user.bio }}</p>
+          <p>Nombre: {{ user?.firstname || 'Desconocido' }}</p>
+          <p>Apellido: {{ user?.lastname || 'Desconocido' }}</p>
+          <p>Email: {{ user?.email || 'No disponible' }}</p>
         </div>
 
         <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
@@ -121,7 +126,8 @@
             </div>
             <div class="mb-3">
               <label for="inputAvatar" class="form-label">Foto de perfil</label>
-              <input @change="handleFileUpload" type="file" class="form-control" id="inputAvatar">
+              <input @change="handleFileUpload
+                " type="file" class="form-control" id="inputAvatar">
             </div>
             <button type="submit" class="btn btn-primary">Guardar Cambios</button>
           </form>
@@ -134,159 +140,184 @@
 <script>
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import UserPublications from './UserPublications.vue'; // Importa el componente de publicaciones de usuario
 
 export default {
   name: 'Profile',
-  components: {
-    UserPublications // Registra el componente de publicaciones de usuario
-  },
   data() {
     return {
-      user: {},
-      publications: [] // Agrega la propiedad publications para almacenar las publicaciones del usuario
+      user: {
+        id: null,
+        firstname: '',
+        lastname: '',
+        email: '',
+        alias: '',
+        password: ''
+      },
+      avatarPreviewUrl: '',
+      publications: [],
+      selectedFile: null
     };
   },
   async created() {
-    const token = Cookies.get('token');
-
-    if (token) {
-      try {
-        const responseUser = await axios.get('http://localhost:8080/api/profile/me', {
-          headers: { Authorization: `Bearer ${token}` }
+    try {
+      const token = Cookies.get('token');
+      if (token) {
+        const response = await axios.get('http://localhost:8080/api/profile/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
-        this.user = responseUser.data; // Almacena los datos del usuario
 
-        const responsePublications = await axios.get(`http://localhost:8080/api/publications/user/${this.user.id}`);
-        this.publications = responsePublications.data;
-      } catch (error) {
-        console.error('Error al obtener las publicaciones del usuario:', error);
+        const userData = response.data;
+        console.log(userData);
+
+        // Asignar datos del usuario
+        this.user = {
+          id: userData.id,
+          firstname: userData.firstname,
+          lastname: userData.lastname,
+          email: userData.email,
+          alias: userData.alias,
+          password: ''  // Mantener la contraseña vacía en esta instancia
+        };
+
+        // Asignar publicaciones del usuario
+        this.publications = userData.publications;
+
+        // Obtener información detallada de cada publicación
+        await Promise.all(this.publications.map(async (post) => {
+          const postId = post.id;
+          const postResponse = await axios.get(`http://localhost:8080/api/publications/id/${postId}`);
+          const updatedPost = postResponse.data;
+          post.likes = updatedPost.likedByUsers;
+          post.comments = updatedPost.comments;
+          post.categories = updatedPost.categories;
+        }));
+      } else {
+        console.error('No se encontró el token en la cookie.');
+        this.$router.push('/login');
       }
-    } else {
-      // No hay token de autenticación, redirecciona al usuario a la página de inicio de sesión
-      this.$router.push('/login');
+    } catch (error) {
+      console.error('Error al obtener los datos del usuario:', error);
+      if (error.response && error.response.status === 401) {
+        this.$router.push('/login');
+      } else {
+        alert('Error al cargar los datos del usuario. Por favor, inténtalo de nuevo más tarde.');
+      }
     }
   },
   methods: {
-    confirmLogout() {
-      if (confirm("¿Está seguro de que quiere cerrar su sesión?")) {
-        this.logout();
+    async updateProfile() {
+      try {
+        const token = Cookies.get('token');
+        if (token) {
+          const userId = this.user.id;
+          const formData = new FormData();
+          formData.append('email', this.user.email);
+          if (this.user.password) {
+            formData.append('password', this.user.password);
+          }
+          if (this.selectedFile) {
+            formData.append('avatar', this.selectedFile);
+          }
+
+          const response = await axios.put(`http://localhost:8080/api/users/id/${userId}`, formData, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+
+          this.user = response.data;
+          alert('Perfil actualizado exitosamente');
+        } else {
+          console.error('No se encontró el token en la cookie.');
+        }
+      } catch (error) {
+        console.error('Error al actualizar el perfil del usuario:', error);
       }
     },
-    logout() {
+    handleFileUpload(event) {
+      this.selectedFile = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = e => {
+        this.avatarPreviewUrl = e.target.result;
+      };
+      reader.readAsDataURL(this.selectedFile);
+    },
+    confirmLogout() {
       Cookies.remove('token');
       this.$router.push('/login');
-    },
-    updateProfile() {
-      // Lógica para actualizar el perfil del usuario
-    },
-    handleFileUpload(event) {
-      const file = event.target.files[0];
-      // Lógica para manejar la carga del archivo
     }
   }
 };
 </script>
 
-<style>
+<style scoped>
 .profile-header {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  background-color: #007bff;
-  background: linear-gradient(to right, #0062E6, #33AEFF);
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
 }
 
-.profile-header .profile-image {
-  position: absolute;
-  bottom: -50px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid white;
+.profile-image img {
   border-radius: 50%;
-}
-
-.profile-header .profile-image img {
   width: 150px;
   height: 150px;
-  border-radius: 50%;
+  object-fit: cover;
 }
 
-.profile-header .profile-info {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-  color: white;
+.profile-info {
+  margin-left: 20px;
 }
 
-.profile-header .profile-info h2 {
+.profile-info h2 {
   margin: 0;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.profile-header .profile-info p {
-  margin: 0;
-  font-size: 16px;
 }
 
 .profile-content {
-  margin-top: 60px;
+  margin-top: 20px;
 }
 
-.profile-content .nav-tabs .nav-link {
-  font-weight: bold;
-}
-
-.profile-content .tab-content {
+.profile-content {
   margin-top: 20px;
 }
 
 .profile-post {
-  border: 1px solid #e1e1e1;
-  padding: 20px;
-  margin-bottom: 20px;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 15px;
 }
 
-.profile-post .post-header {
+.post-header {
   display: flex;
   align-items: center;
+  margin-bottom: 10px;
 }
 
-.profile-post .post-header img {
+.post-header img {
+  border-radius: 50%;
   width: 50px;
   height: 50px;
-  border-radius: 50%;
+  object-fit: cover;
   margin-right: 10px;
 }
 
-.profile-post .post-user {
+.post-user {
   font-weight: bold;
 }
 
-.profile-post .post-date {
-  margin-left: auto;
-  color: #888;
-}
-
-.profile-post .post-content {
+.post-content {
   margin-top: 10px;
 }
 
-.profile-post .post-actions {
-  margin-top: 10px;
+.post-actions {
   display: flex;
   justify-content: space-between;
-}
-
-.profile-post .post-actions .btn {
-  display: flex;
-  align-items: center;
-}
-
-.profile-post .post-actions .btn i {
-  margin-right: 5px;
+  margin-top: 10px;
 }
 </style>

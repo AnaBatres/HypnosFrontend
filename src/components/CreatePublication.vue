@@ -18,31 +18,29 @@
             <li class="nav-item">
               <a class="nav-link" href="#"><i class="bi bi-bell text-white"></i></a>
             </li>
-            <RouterLink to="/create-publication">
-              <li class="nav-item">
-                <a class="nav-link"><i class="bi bi-cloud-upload text-white"></i></a>
-              </li>
-            </RouterLink>
+            <li class="nav-item">
+              <router-link to="/create-publication" class="nav-link"><i class="bi bi-cloud-upload text-white"></i></router-link>
+            </li>
           </ul>
           <form class="d-flex">
             <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Buscar">
             <button class="btn btn-outline-light" type="submit">Buscar</button>
           </form>
           <ul class="navbar-nav ms-3">
-            <li class="nav-item dropdown">
+            <li class="nav-item dropdown" v-if="user">
               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
                 aria-expanded="false">
-                <i class="bi bi-person-circle text-white"></i> Usuario
+                <i class="bi bi-person-circle text-white"></i> {{ user.alias }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                <RouterLink to="/profile">
+                <router-link to="/profile">
                   <li><a class="dropdown-item">Perfil</a></li>
-                </RouterLink>
+                </router-link>
                 <li><a class="dropdown-item" href="#">Configuración</a></li>
                 <li>
                   <hr class="dropdown-divider">
                 </li>
-                <li><a class="dropdown-item" href="#">Cerrar sesión</a></li>
+                <li><a class="dropdown-item" href="#" @click="confirmLogout">Cerrar sesión</a></li>
               </ul>
             </li>
           </ul>
@@ -58,18 +56,8 @@
         <div class="card-body">
           <form @submit.prevent="submitPost">
             <div class="mb-3">
-              <label for="postTitle" class="form-label">Título</label>
-              <input v-model="newPost.title" type="text" class="form-control" id="postTitle"
-                placeholder="Título de la publicación">
-            </div>
-            <div class="mb-3">
-              <label for="postDescription" class="form-label">Descripción Breve</label>
-              <input v-model="newPost.description" type="text" class="form-control" id="postDescription"
-                placeholder="Breve descripción">
-            </div>
-            <div class="mb-3">
               <label for="postContent" class="form-label">Contenido</label>
-              <textarea v-model="newPost.content" class="form-control" id="postContent" rows="5"
+              <textarea v-model="newPost.text" class="form-control" id="postContent" rows="5"
                 placeholder="Escribe aquí el contenido de tu publicación"></textarea>
             </div>
             <button type="submit" class="btn btn-primary">Publicar</button>
@@ -82,80 +70,73 @@
 
 <script>
 import Cookies from 'js-cookie';
+import axios from 'axios';
 
 export default {
   data() {
     return {
       newPost: {
-        title: '',
-        description: '',
-        content: ''
-      }
+        text: ''
+      },
+      userId: null
     };
+  },
+  created() {
+    // When the component is created, fetch the user ID
+    this.fetchUserId();
   },
   methods: {
     submitPost() {
-      const userId = this.getUserIdFromToken(); // Obtener el ID del usuario del token JWT almacenado en la cookie
-      if (!userId) {
+      if (!this.userId) {
         console.error("Error: No se pudo obtener el ID del usuario del token JWT.");
         return;
       }
 
       const postData = {
-        userId: userId,
-        title: this.newPost.title,
-        description: this.newPost.description,
-        content: this.newPost.content
+        userId: this.userId,
+        text: this.newPost.text
       };
 
-      // Aquí podrías enviar los datos de la publicación al servidor
-      console.log('Publicación creada:', postData);
-      alert('Publicación creada exitosamente!');
-      this.clearForm();
+      axios.post('http://localhost:8080/api/publications/create', postData)
+        .then(response => {
+          console.log('Publicación creada exitosamente:', response.data);
+          alert('Publicación creada exitosamente!');
+          this.clearForm();
+        })
+        .catch(error => {
+          console.error('Error al crear la publicación:', error);
+          alert('Error al crear la publicación. Por favor, inténtalo de nuevo más tarde.');
+        });
     },
-    getUserIdFromToken() {
-      const token = Cookies.get('token'); // Obtener el token JWT de la cookie
+    fetchUserId() {
+      const token = Cookies.get('token');
       if (!token) {
         console.error("Error: No se encontró el token JWT en la cookie.");
-        return null;
+        return;
       }
 
       try {
-        // Decodificar el token JWT para obtener el payload
         const payload = JSON.parse(atob(token.split('.')[1]));
-        // Retornar el ID del usuario del payload
-        return payload.userId;
+        const userAlias = payload.alias;
+        axios.get(`http://localhost:8080/api/users/@${userAlias}`)
+          .then(response => {
+            this.userId = response.data.id;
+          })
+          .catch(error => {
+            console.error('Error al obtener el ID del usuario:', error);
+          });
       } catch (error) {
         console.error("Error al decodificar el token JWT:", error);
-        return null;
       }
     },
     clearForm() {
-      this.newPost.title = '';
-      this.newPost.description = '';
-      this.newPost.content = '';
-    },
-    getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
+      this.newPost.text = '';
     }
   }
 };
+
 </script>
 
-
 <style>
-.dropdown-item {
-  text-decoration: none;
-}
-
-.create-post {
-  max-width: 600px;
-  margin: auto;
-}
-
-.card-header {
-  font-weight: bold;
-}
+/* Estilos CSS */
 </style>

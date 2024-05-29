@@ -11,11 +11,16 @@ import Login from './components/Login.vue';
 import Register from './components/Register.vue';
 import Profile from './components/Profile.vue';
 import CreatePublication from './components/CreatePublication.vue'; 
+import UserSettings from './components/UserSettings.vue';
+import Index from './components/Index.vue';
+
 
 // Rutas
 const routes = [
   { path: '/', component: Register },
   { path: '/login', component: Login },
+  { path: '/settings', component: UserSettings},
+  { path: '/index', component: Index},
   { 
     path: '/profile', 
     component: Profile,
@@ -25,7 +30,7 @@ const routes = [
     path: '/create-publication', 
     component: CreatePublication,
     meta: { requiresAuth: true } // Ruta protegida, requiere autenticación
-  },
+  }
 ];
 
 // Creación de instancia de enrutador
@@ -34,7 +39,6 @@ const router = createRouter({
   routes
 });
 
-// Middleware para proteger rutas
 // Middleware para proteger rutas
 router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
@@ -48,7 +52,6 @@ router.beforeEach((to, from, next) => {
     next();
   }
 });
-
 
 // Creación de la aplicación de Vue y uso del enrutador
 const app = createApp(App);
