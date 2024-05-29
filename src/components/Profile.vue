@@ -2,7 +2,7 @@
   <div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container">
-        <router-link to="/" class="navbar-brand">SocialNetwork</router-link>
+        <router-link to="/" class="navbar-brand">Hypnos</router-link>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
           aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -69,17 +69,9 @@
                 <li class="nav-item">
                   <a class="nav-link active" href="#">Publicaciones</a>
                 </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="#">Acerca de</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="#">Configuración</a>
-                </li>
               </ul>
             </div>
             <div class="card-body">
-
-              <!-- Contenido de las pestañas -->
               <!-- Pestaña de Publicaciones -->
               <div class="tab-pane fade show active" id="publications" role="tabpanel"
                 aria-labelledby="publications-tab">
@@ -88,8 +80,8 @@
                 </div>
                 <div v-else>
                   <div v-for="post in publications" :key="post.id" class="card mb-3">
-                    <div class="card-body">
-                      <div class="d-flex justify-content-between">
+                    <div class="card-header">
+                      <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
                           <img :src="post.user?.profilePicture || 'https://via.placeholder.com/50'" alt="User Picture"
                             class="rounded-circle me-3" style="width: 50px;">
@@ -99,99 +91,16 @@
                           </div>
                         </div>
                         <div>
-                          <div class="d-flex">
-                            <button class="btn btn-outline-primary me-2"><i class="bi bi-hand-thumbs-up"></i> Me
-                              gusta</button>
-                            <button class="btn btn-outline-secondary me-2"><i class="bi bi-chat-dots"></i>
-                              Comentar</button>
-                            <button class="btn btn-outline-danger"><i class="bi bi-arrow-bar-up"></i> Compartir</button>
-                          </div>
+                          <button class="btn btn-outline-danger"><i class="bi bi-arrow-bar-up"></i> Compartir</button>
                         </div>
                       </div>
+                    </div>
+                    <div class="card-body">
                       <p class="card-text">{{ post.text }}</p>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <!-- Pestaña de Acerca de -->
-              <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
-                <h4 class="mb-4">Información Personal</h4>
-                <div class="mb-3">
-                  <label class="form-label">Nombre</label>
-                  <p>{{ user?.firstname || 'Desconocido' }}</p>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Apellido</label>
-                  <p>{{ user?.lastname || 'Desconocido' }}</p>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Email</label>
-                  <p>{{ user?.email || 'No disponible' }}</p>
-                </div>
-              </div>
-
-              <!-- Pestaña de Configuración -->
-              <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
-                <h4 class="mb-4">Configuración de la Cuenta</h4>
-                <form @submit.prevent="updateProfile">
-                  <div class="mb-3">
-                    <label for="inputEmail" class="form-label">Email</label>
-                    <input v-model="user.email" type="email" class="form-control" id="inputEmail"
-                      placeholder="name@example.com">
-                  </div>
-                  <div class="mb-3">
-                    <label for="inputPassword" class="form-label">Contraseña</label>
-                    <input v-model="user.password" type="password" class="form-control" id="inputPassword"
-                      placeholder="Contraseña">
-                  </div>
-                  <div class="mb-3">
-                    <label for="inputAvatar" class="form-label">Foto de perfil</label>
-                    <input @change="handleFileUpload" type="file" class="form-control" id="inputAvatar">
-                  </div>
-                  <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                </form>
-              </div>
-
-              <!-- Pestaña de Acerca de -->
-              <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
-                <h4 class="mb-4">Información Personal</h4>
-                <div class="mb-3">
-                  <label class="form-label">Nombre</label>
-                  <p>{{ user?.firstname || 'Desconocido' }}</p>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Apellido</label>
-                  <p>{{ user?.lastname || 'Desconocido' }}</p>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Email</label>
-                  <p>{{ user?.email || 'No disponible' }}</p>
-                </div>
-              </div>
-
-              <!-- Pestaña de Configuración -->
-              <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
-                <h4 class="mb-4">Configuración de la Cuenta</h4>
-                <form @submit.prevent="updateProfile">
-                  <div class="mb-3">
-                    <label for="inputEmail" class="form-label">Email</label>
-                    <input v-model="user.email" type="email" class="form-control" id="inputEmail"
-                      placeholder="name@example.com">
-                  </div>
-                  <div class="mb-3">
-                    <label for="inputPassword" class="form-label">Contraseña</label>
-                    <input v-model="user.password" type="password" class="form-control" id="inputPassword"
-                      placeholder="Contraseña">
-                  </div>
-                  <div class="mb-3">
-                    <label for="inputAvatar" class="form-label">Foto de perfil</label>
-                    <input @change="handleFileUpload" type="file" class="form-control" id="inputAvatar">
-                  </div>
-                  <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                </form>
-              </div>
-
             </div>
           </div>
         </div>
@@ -199,6 +108,8 @@
     </div>
   </div>
 </template>
+
+
 
 <script>
 import axios from 'axios';
