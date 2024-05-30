@@ -13,6 +13,7 @@ import Profile from './components/Profile.vue';
 import CreatePublication from './components/CreatePublication.vue'; 
 import UserSettings from './components/UserSettings.vue';
 import Index from './components/Index.vue';
+import EditPublication from './components/EditPublication.vue';
 
 
 // Rutas
@@ -21,6 +22,7 @@ const routes = [
   { path: '/login', component: Login },
   { path: '/settings', component: UserSettings},
   { path: '/index', component: Index},
+  { path: '/edit-publication/:id', component: EditPublication },
   { 
     path: '/profile', 
     component: Profile,

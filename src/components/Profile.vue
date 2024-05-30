@@ -86,19 +86,23 @@
                           <img :src="post.user?.profilePicture || 'https://via.placeholder.com/50'" alt="User Picture"
                             class="rounded-circle me-3" style="width: 50px;">
                           <div>
-                            <h5 class="card-title">{{ post.user?.firstname }} {{ post.user?.lastname }}</h5>
+                            <h5 class="card-title">{{ post.user?.alias }}</h5> <!-- Mostrar alias del usuario -->
                             <p class="card-text"><small class="text-muted">{{ post.createdAt }}</small></p>
                           </div>
                         </div>
                         <div>
-                          <button class="btn btn-outline-danger me-2"><i class="bi bi-arrow-bar-up"></i> Compartir</button>
-                          <button class="btn btn-outline-danger me-2" @click="editPost(post)">Editar</button>
-                          <button class="btn btn-danger me-2" @click="deletePost(post.id)">Eliminar</button>
+                          <button class="btn btn-outline-danger me-2"><i class="bi bi-arrow-bar-up"></i>
+                            Compartir</button>
+                            <router-link :to="'/edit-publication/' + post.id" class="btn btn-outline-danger me-2">Editar</router-link>
+                            <button class="btn btn-danger me-2" @click="deletePost(post.id)">Eliminar</button>
                         </div>
                       </div>
                     </div>
                     <div class="card-body">
                       <p class="card-text">{{ post.text }}</p>
+                      <div> <!-- Mostrar solo el nombre de la categoría con margen -->
+                        <span v-for="(category, index) in post.categories" :key="index" class="badge bg-secondary me-1">{{ category.name }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -116,6 +120,7 @@
 <script>
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { RouterLink } from 'vue-router';
 
 export default {
   name: 'Profile',
@@ -168,7 +173,7 @@ export default {
           const updatedPost = postResponse.data;
           post.likes = updatedPost.likedByUsers;
           post.comments = updatedPost.comments;
-          post.categories = updatedPost.categories;
+          post.categories = updatedPost.categories; // Asegúrate de obtener las categorías
         }));
       } else {
         console.error('No se encontró el token en la cookie.');
@@ -212,6 +217,27 @@ export default {
         }
       } catch (error) {
         console.error('Error al actualizar el perfil del usuario:', error);
+      }
+    },
+    deletePost(postId) {
+      if (confirm('¿Estás seguro de que deseas eliminar esta publicación?')) {
+        try {
+          const token = Cookies.get('token');
+          if (token) {
+            axios.delete(`http://localhost:8080/api/publications/${postId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            });
+            // Eliminar la publicación del array de publicaciones
+            this.publications = this.publications.filter(post => post.id !== postId);
+          } else {
+            console.error('No se encontró el token en la cookie.');
+          }
+        } catch (error) {
+          console.error('Error al eliminar la publicación:', error);
+          alert('Error al eliminar la publicación. Por favor, inténtalo de nuevo más tarde.');
+        }
       }
     },
     handleFileUpload(event) {
