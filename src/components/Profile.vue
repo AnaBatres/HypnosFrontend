@@ -1,8 +1,8 @@
 <template>
   <div>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
-        <router-link to="/" class="navbar-brand">Hypnos</router-link>
+        <router-link to="/" class="navbar-brand text-light">HYPNOS</router-link>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
           aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -10,39 +10,52 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav me-auto">
             <li class="nav-item">
-              <router-link to="/" class="nav-link" aria-current="page">Inicio</router-link>
+              <router-link to="/" class="nav-link text-light" aria-current="page">
+                <i class="bi bi-house-door-fill" style="color: white;"></i>
+              </router-link>
             </li>
             <li class="nav-item">
-              <router-link to="/explore" class="nav-link">Explorar</router-link>
+              <router-link to="/explore" class="nav-link text-light">
+                <i class="bi bi-compass-fill" style="color: white;"></i>
+              </router-link>
             </li>
             <li class="nav-item">
-              <router-link to="/notifications" class="nav-link">Notificaciones</router-link>
+              <router-link to="/notifications" class="nav-link text-light">
+                <i class="bi bi-bell-fill" style="color: white;"></i>
+              </router-link>
             </li>
             <li class="nav-item">
-              <router-link to="/create-publication" class="nav-link">Crear Publicación</router-link>
+              <router-link to="/create-publication" class="nav-link text-light">
+                <i class="bi bi-pencil-square" style="color: white;"></i>
+              </router-link>
             </li>
           </ul>
+
           <form class="d-flex">
-            <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Buscar">
-            <button class="btn btn-outline-light" type="submit">Buscar</button>
+            <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Buscar"
+                   v-model="user.search">
+            <button class="btn btn-outline-light" type="button" v-on:click="redirectToUserProfile">
+              <i class="bi bi-search"></i>
+            </button>
           </form>
+
           <ul class="navbar-nav ms-3">
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
-                aria-expanded="false">
+              <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button"
+                data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-person-circle"></i> {{ user?.firstname || '' }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                <router-link to="/profile">
+                <router-link to="/profile" class="router-link-custom">
                   <li><a class="dropdown-item"><i class="bi bi-person-circle"></i> Perfil</a></li>
                 </router-link>
-                <router-link to="/settings">
+                <router-link to="/settings" class="router-link-custom">
                   <li><a class="dropdown-item"><i class="bi bi-gear"></i> Configuración</a></li>
                 </router-link>
                 <li>
                   <hr class="dropdown-divider">
                 </li>
-                <li><a class="dropdown-item" href="#" @click="confirmLogout"><i class="bi bi-box-arrow-right"></i>
+                <li><a class="dropdown-item" href="#S" @click="confirmLogout"><i class="bi bi-box-arrow-right"></i>
                     Cerrar sesión</a></li>
               </ul>
             </li>
@@ -50,6 +63,7 @@
         </div>
       </div>
     </nav>
+
     <div class="container mt-4">
       <div class="row">
         <div class="col-md-4">
@@ -72,7 +86,6 @@
               </ul>
             </div>
             <div class="card-body">
-              <!-- Pestaña de Publicaciones -->
               <div class="tab-pane fade show active" id="publications" role="tabpanel"
                 aria-labelledby="publications-tab">
                 <div v-if="publications.length === 0" class="text-center mt-4">
@@ -80,30 +93,20 @@
                 </div>
                 <div v-else>
                   <div v-for="post in publications" :key="post.id" class="card mb-3">
-                    <div class="card-header">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                          <img :src="post.user?.profilePicture || 'https://via.placeholder.com/50'" alt="User Picture"
-                            class="rounded-circle me-3" style="width: 50px;">
-                          <div>
-                            <h5 class="card-title">{{ post.user?.alias }}</h5> <!-- Mostrar alias del usuario -->
-                            <p class="card-text"><small class="text-muted">{{ post.createdAt }}</small></p>
-                          </div>
-                        </div>
-                        <div>
-                          <button class="btn btn-outline-danger me-2"><i class="bi bi-arrow-bar-up"></i>
+                    <router-link :to="'/publication/' + post.id" class="text-decoration-none">
+                      <div class="card-header">
+                        <h5 class="card-title text-center">
+                          {{ post.title }}
+                        </h5>
+                        <div class="d-flex justify-content-center mt-3">
+                          <button class="btn btn-outline-danger btn-sm me-2"><i class="bi bi-arrow-bar-up"></i>
                             Compartir</button>
-                            <router-link :to="'/edit-publication/' + post.id" class="btn btn-outline-danger me-2">Editar</router-link>
-                            <button class="btn btn-danger me-2" @click="deletePost(post.id)">Eliminar</button>
+                          <router-link :to="'/edit-publication/' + post.id"
+                            class="btn btn-outline-danger btn-sm me-2">Editar</router-link>
+                          <button class="btn btn-danger btn-sm me-2" @click="deletePost(post.id)">Eliminar</button>
                         </div>
                       </div>
-                    </div>
-                    <div class="card-body">
-                      <p class="card-text">{{ post.text }}</p>
-                      <div> <!-- Mostrar solo el nombre de la categoría con margen -->
-                        <span v-for="(category, index) in post.categories" :key="index" class="badge bg-secondary me-1">{{ category.name }}</span>
-                      </div>
-                    </div>
+                    </router-link>
                   </div>
                 </div>
               </div>
@@ -116,11 +119,11 @@
 </template>
 
 
-
 <script>
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { RouterLink } from 'vue-router';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export default {
   name: 'Profile',
@@ -132,7 +135,8 @@ export default {
         lastname: '',
         email: '',
         alias: '',
-        password: ''
+        password: '',
+        search: ''
       },
       avatarPreviewUrl: '',
       publications: [],
@@ -173,7 +177,8 @@ export default {
           const updatedPost = postResponse.data;
           post.likes = updatedPost.likedByUsers;
           post.comments = updatedPost.comments;
-          post.categories = updatedPost.categories; // Asegúrate de obtener las categorías
+          post.categories = updatedPost.categories;
+          post.title = updatedPost.title;
         }));
       } else {
         console.error('No se encontró el token en la cookie.');
@@ -219,12 +224,43 @@ export default {
         console.error('Error al actualizar el perfil del usuario:', error);
       }
     },
-    deletePost(postId) {
+    async searchUserByAlias() {
+      try {
+        const token = Cookies.get('token');
+        if (token) {
+          const response = await axios.get(`http://localhost:8080/api/users/@${this.user.search}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const userData = response.data;
+          if (userData.id) {
+            // Redirigir al perfil del usuario encontrado
+            this.$router.push(`/profile/${userData.alias}`);
+          } else {
+            alert('Usuario no encontrado.');
+          }
+        } else {
+          console.error('No se encontró el token en la cookie.');
+        }
+      } catch (error) {
+        console.error('Error al buscar el usuario por alias:', error);
+        alert('Error al buscar el usuario por alias. Por favor, inténtalo de nuevo más tarde.');
+      }
+    },
+    async redirectToUserProfile() {
+      if (this.user.search.trim() !== '') {
+        this.searchUserByAlias();
+      }
+    },
+    async deletePost(postId) {
       if (confirm('¿Estás seguro de que deseas eliminar esta publicación?')) {
         try {
           const token = Cookies.get('token');
           if (token) {
-            axios.delete(`http://localhost:8080/api/publications/${postId}`, {
+            await axios.delete(`http://localhost:8080/api/publications/${postId}`, {
               headers: {
                 Authorization: `Bearer ${token}`
               }
@@ -247,79 +283,9 @@ export default {
         this.avatarPreviewUrl = e.target.result;
       };
       reader.readAsDataURL(this.selectedFile);
-    },
-    confirmLogout() {
-      Cookies.remove('token');
-      this.$router.push('/login');
     }
   }
 };
 </script>
 
-<style scoped>
-.profile-header {
-  display: flex;
-  align-items: center;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.profile-image img {
-  border-radius: 50%;
-  width: 150px;
-  height: 150px;
-  object-fit: cover;
-}
-
-.profile-info {
-  margin-left: 20px;
-}
-
-.profile-info h2 {
-  margin: 0;
-}
-
-.profile-content {
-  margin-top: 20px;
-}
-
-.profile-content {
-  margin-top: 20px;
-}
-
-.profile-post {
-  border: 1px solid #dee2e6;
-  border-radius: 5px;
-  padding: 15px;
-  margin-bottom: 15px;
-}
-
-.post-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.post-header img {
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  margin-right: 10px;
-}
-
-.post-user {
-  font-weight: bold;
-}
-
-.post-content {
-  margin-top: 10px;
-}
-
-.post-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-}
-</style>
+<style scoped></style>

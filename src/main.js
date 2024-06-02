@@ -14,7 +14,9 @@ import CreatePublication from './components/CreatePublication.vue';
 import UserSettings from './components/UserSettings.vue';
 import Index from './components/Index.vue';
 import EditPublication from './components/EditPublication.vue';
-
+import Explore from './components/Explore.vue';
+import PublicationDetail from './components/PublicationDetail.vue';
+import UserProfile from './components/UserProfile.vue'
 
 // Rutas
 const routes = [
@@ -23,6 +25,13 @@ const routes = [
   { path: '/settings', component: UserSettings},
   { path: '/index', component: Index},
   { path: '/edit-publication/:id', component: EditPublication },
+  { path: '/explore', component: Explore },
+  { path: '/publication/:id', name: 'PublicationDetail', component: PublicationDetail },
+  {
+    path: '/profile/:alias', // Esta es la ruta para el perfil del usuario
+    name: 'UserProfile',
+    component: UserProfile
+  },
   { 
     path: '/profile', 
     component: Profile,

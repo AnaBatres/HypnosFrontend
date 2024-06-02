@@ -1,9 +1,9 @@
 <template>
   <div>
     <!-- Barra de navegación -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
-        <router-link to="/" class="navbar-brand">Hypnos</router-link>
+        <router-link to="/" class="navbar-brand text-light">HYPNOS</router-link>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
           aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -11,26 +11,38 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav me-auto">
             <li class="nav-item">
-              <router-link to="/" class="nav-link" aria-current="page">Inicio</router-link>
+              <router-link to="/" class="nav-link text-light" aria-current="page">
+                <i class="bi bi-house-door-fill" style="color: white;"></i>
+              </router-link>
             </li>
             <li class="nav-item">
-              <router-link to="/explore" class="nav-link">Explorar</router-link>
+              <router-link to="/explore" class="nav-link text-light">
+                <i class="bi bi-compass-fill" style="color: white;"></i>
+              </router-link>
             </li>
             <li class="nav-item">
-              <router-link to="/notifications" class="nav-link">Notificaciones</router-link>
+              <router-link to="/notifications" class="nav-link text-light">
+                <i class="bi bi-bell-fill" style="color: white;"></i>
+              </router-link>
             </li>
             <li class="nav-item">
-              <router-link to="/create-publication" class="nav-link">Crear Publicación</router-link>
+              <router-link to="/create-publication" class="nav-link text-light">
+                <i class="bi bi-pencil-square" style="color: white;"></i>
+              </router-link>
             </li>
           </ul>
+          
+          
+          
           <form class="d-flex">
             <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Buscar">
-            <button class="btn btn-outline-light" type="submit">Buscar</button>
+            <button class="btn btn-outline-light" type="submit"><i class="bi bi-search"></i></button>
           </form>
+          
           <ul class="navbar-nav ms-3">
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
-                aria-expanded="false">
+              <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button"
+                data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-person-circle"></i> {{ user?.firstname || '' }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
@@ -51,7 +63,6 @@
         </div>
       </div>
     </nav>
-
     <!-- Contenido principal -->
     <div class="container mt-4">
       <div class="row justify-content-center">
@@ -61,8 +72,13 @@
               <h2 class="card-title">Comparte tu sueño</h2>
               <form @submit.prevent="createPost" class="form">
                 <div class="mb-3">
-                  <label for="dream" class="form-label">Cuéntanos sobre tu sueño</label>
-                  <textarea id="dream" v-model="form.text" class="form-control" rows="5"
+                  <label for="title" class="form-label">¿Qué has soñado?</label>
+                  <input id="title" v-model="form.title" class="form-control" type="text"
+                    placeholder="Ponle un título a tu sueño" required>
+                </div>
+                <div class="mb-3">
+                  <label for="text" class="form-label">Cuéntanos sobre tu sueño</label>
+                  <textarea id="text" v-model="form.text" class="form-control" rows="5"
                     placeholder="Describe tu sueño aquí..." required></textarea>
                 </div>
                 <div class="mb-3">
@@ -73,9 +89,11 @@
                       {{ category.name }}</option>
                   </select>
                   <div class="selected-categories mt-3">
-                    <span v-for="categoryId in form.categoryIds" :key="categoryId" class="badge bg-info me-2 category-badge">
+                    <span v-for="categoryId in form.categoryIds" :key="categoryId"
+                      class="badge bg-info me-2 category-badge">
                       {{ getCategoryName(categoryId) }}
-                      <button type="button" class="btn-close" aria-label="Close" @click="removeCategory(categoryId)"></button>
+                      <button type="button" class="btn-close" aria-label="Close"
+                        @click="removeCategory(categoryId)"></button>
                     </span>
                   </div>
                 </div>
@@ -90,8 +108,6 @@
   </div>
 </template>
 
-
-
 <script>
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -101,6 +117,7 @@ export default {
   data() {
     return {
       form: {
+        title: '', // Agregar el campo title con un valor inicial vacío
         text: '',
         categoryIds: [],
         userId: null
@@ -160,6 +177,7 @@ export default {
         const response = await axios.post(
           'http://localhost:8080/api/publications/create',
           {
+            title: this.form.title,
             text: this.form.text,
             categoryIds: this.form.categoryIds,
             userId: this.form.userId
@@ -171,6 +189,7 @@ export default {
           }
         );
         this.message = 'La publicación se ha creado correctamente, vuelve a tu perfil para visualizarla.';
+        this.form.title = ''; // Limpiar el campo title después de enviarlo
         this.form.text = '';
         this.form.categoryIds = [];
       } catch (error) {
@@ -181,7 +200,6 @@ export default {
   }
 };
 </script>
-
 
 <style scoped>
 .dream-post {
