@@ -2,10 +2,11 @@
   <div>
     <Navbar />
     <div class="container mt-4">
+      <h2 class="text-center mb-4">Explora los sueños de los usuarios de HYPNOS</h2>
       <div v-if="loading" class="text-center">Cargando...</div>
       <div v-else>
         <div class="row">
-          <div v-for="publication in randomPublications" :key="publication.id" class="col-md-6 mb-4">
+          <div v-for="(publication, index) in paginatedPublications" :key="publication.id" class="col-md-6 mb-4">
             <div class="card h-100" @click="viewPublication(publication.id)">
               <div class="card-body">
                 <p class="card-text text-muted" v-if="publication.user">{{ publication.user.alias }}</p>
@@ -14,6 +15,19 @@
             </div>
           </div>
         </div>
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center mt-4">
+            <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+              <a class="page-link" href="#" @click.prevent="previousPage">Anterior</a>
+            </li>
+            <li v-for="page in totalPages" :key="page" class="page-item" :class="{ 'active': page === currentPage }">
+              <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+              <a class="page-link" href="#" @click.prevent="nextPage">Siguiente</a>
+            </li>
+          </ul>
+        </nav>
       </div>
     </div>
   </div>
@@ -30,12 +44,11 @@ export default {
   },
   data() {
     return {
-      randomPublications: [],
+      publications: [],
+      paginatedPublications: [],
       loading: false,
-      search: '',
-      user: {
-        search: ''
-      }
+      currentPage: 1,
+      pageSize: 6 // Cambiar el tamaño de la página aquí
     };
   },
   created() {
@@ -43,9 +56,9 @@ export default {
 
     axios.get('http://localhost:8080/api/publications/random')
       .then(async response => {
-        const userId = await this.fetchCurrentUserId(); // Fetch current user ID
+        const userId = await this.fetchCurrentUserId(); // Obtener ID del usuario actual
 
-        this.randomPublications = response.data.map(item => {
+        this.publications = response.data.map(item => {
           const publicationUserId = item[4];
           return {
             id: item[0],
@@ -55,17 +68,20 @@ export default {
           };
         });
 
+        this.publications = this.publications.filter(publication => publication.userId !== userId);
 
-        this.randomPublications = this.randomPublications.filter(publication => publication.userId !== userId);
-
-        // Call getUserById for each publication to get the user alias
-        this.randomPublications.forEach(publication => {
+        // Llamar a getUserById para cada publicación para obtener el alias del usuario
+        this.publications.forEach(publication => {
           this.getUserById(publication.userId);
         });
+
+        // Configuración inicial de paginación
+        this.paginatePublications();
+
         this.loading = false;
       })
       .catch(error => {
-        console.error('Error fetching random publications:', error);
+        console.error('Error al obtener publicaciones aleatorias:', error);
         this.loading = false;
       });
   },
@@ -80,16 +96,16 @@ export default {
         });
         return response.data.id;
       } catch (error) {
-        console.error('Error fetching current user ID:', error);
+        console.error('Error al obtener el ID de usuario actual:', error);
         return null;
       }
     },
     async getUserById(userId) {
       try {
         const response = await axios.get(`http://localhost:8080/api/users/id/${userId}`);
-        // Actualiza el usuario de la publicación con los datos obtenidos
+        // Actualizar el usuario de la publicación con los datos obtenidos
         const user = response.data;
-        this.randomPublications.forEach(publication => {
+        this.publications.forEach(publication => {
           if (publication.userId === userId) {
             publication.user = user;
           }
@@ -101,6 +117,31 @@ export default {
     },
     viewPublication(id) {
       this.$router.push({ name: 'PublicationDetail', params: { id } });
+    },
+    paginatePublications() {
+      const startIndex = (this.currentPage - 1) * this.pageSize;
+      this.paginatedPublications = this.publications.slice(startIndex, startIndex + this.pageSize);
+    },
+    changePage(page) {
+      this.currentPage = page;
+      this.paginatePublications();
+    },
+    previousPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+        this.paginatePublications();
+      }
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+        this.paginatePublications();
+      }
+    }
+  },
+  computed: {
+    totalPages() {
+      return Math.ceil(this.publications.length / this.pageSize);
     }
   }
 };

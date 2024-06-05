@@ -31,7 +31,7 @@ const routes = [
   { path: '/explore', component: Explore },
   { path: '/publication/:id', name: 'PublicationDetail', component: PublicationDetail },
   {
-    path: '/profile/:alias', // Esta es la ruta para el perfil del usuario
+    path: '/profile/:alias', 
     name: 'UserProfile',
     component: UserProfile
   },
@@ -43,12 +43,12 @@ const routes = [
   { 
     path: '/profile', 
     component: Profile,
-    meta: { requiresAuth: true } // Ruta protegida, requiere autenticación
+    meta: { requiresAuth: true } 
   },
   { 
     path: '/create-publication', 
     component: CreatePublication,
-    meta: { requiresAuth: true } // Ruta protegida, requiere autenticación
+    meta: { requiresAuth: true } 
   }
 ];
 
@@ -58,7 +58,7 @@ const router = createRouter({
   routes
 });
 
-// Middleware para proteger rutas
+
 router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
     const token = Cookies.get('token');
@@ -74,7 +74,7 @@ router.beforeEach((to, from, next) => {
 
 library.add(faGhost);
 
-// Creación de la aplicación de Vue y uso del enrutador
+
 const app = createApp(App);
 app.use(router);
 app.component('font-awesome-icon', FontAwesomeIcon);

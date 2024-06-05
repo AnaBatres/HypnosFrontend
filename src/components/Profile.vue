@@ -112,8 +112,7 @@ export default {
         email: '',
         alias: '',
         password: '',
-        search: '',
-        dreamCategories: []
+        search: ''
       },
       avatarPreviewUrl: '',
       publications: [],
@@ -145,8 +144,7 @@ export default {
           lastname: userData.lastname,
           email: userData.email,
           alias: userData.alias,
-          password: userData.password,
-          dreamCategories: userData.dreamCategories
+          password: userData.password
         };
 
         // Obtener publicaciones del usuario
@@ -162,7 +160,6 @@ export default {
         this.publications.forEach(post => {
           post.likes = post.likedByUsers;
           post.comments = post.comments;
-          post.categories = post.categories;
         });
 
         this.getFollowData();
@@ -254,12 +251,18 @@ export default {
           try {
             const token = Cookies.get('token');
             if (token) {
-              await axios.delete(`http://localhost:8080/api/publications/id/${postId}`, {
+              await axios.delete(`http://localhost:8080/api/publications/${postId}`, {
                 headers: {
                   Authorization: `Bearer ${token}`
                 }
               });
               this.publications = this.publications.filter(post => post.id !== postId);
+              // Mostrar SweetAlert de éxito
+              Swal.fire({
+                icon: 'success',
+                title: 'Publicación eliminada',
+                text: 'La publicación se ha eliminado correctamente.'
+              });
             } else {
               console.error('No se encontró el token en la cookie.');
             }
@@ -273,14 +276,6 @@ export default {
           }
         }
       });
-    },
-    handleFileUpload(event) {
-      this.selectedFile = event.target.files[0];
-      const reader = new FileReader();
-      reader.onload = e => {
-        this.avatarPreviewUrl = e.target.result;
-      };
-      reader.readAsDataURL(this.selectedFile);
     },
     setActiveTab(tab) {
       this.activeTab = tab;

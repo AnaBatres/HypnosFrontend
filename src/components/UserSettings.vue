@@ -12,29 +12,17 @@
               <form @submit.prevent="updateProfile">
                 <div class="mb-3">
                   <label for="inputFirstname" class="form-label">Nombre</label>
-                  <input v-model="user.firstname" type="text" class="form-control" id="inputFirstname"
-                    :disabled="!editMode">
+                  <input v-model="user.firstname" type="text" class="form-control" id="inputFirstname" :disabled="!editMode">
                 </div>
                 <div class="mb-3">
                   <label for="inputLastname" class="form-label">Apellido</label>
-                  <input v-model="user.lastname" type="text" class="form-control" id="inputLastname"
-                    :disabled="!editMode">
+                  <input v-model="user.lastname" type="text" class="form-control" id="inputLastname" :disabled="!editMode">
                 </div>
                 <div class="mb-3">
                   <label for="inputAlias" class="form-label">Alias</label>
                   <input v-model="user.alias" type="text" class="form-control" id="inputAlias" :disabled="!editMode">
                 </div>
-                <div class="mb-3">
-                  <label for="inputEmail" class="form-label">Email</label>
-                  <input v-model="user.email" type="email" class="form-control" id="inputEmail"
-                    placeholder="name@example.com" :disabled="!editMode">
-                </div>
-                <div class="mb-3">
-                  <label for="inputPassword" class="form-label">Contraseña</label>
-                  <input v-model="password" type="password" class="form-control" id="inputPassword"
-                    :disabled="!editMode">
-                </div>
-                <button v-if="editMode" type="submit" class="btn btn-primary">Guardar Cambios</button>
+                <button v-if="editMode" type="button" @click="updateProfile" class="btn btn-primary">Guardar Cambios</button>
                 <button v-else type="button" @click="editMode = true" class="btn btn-secondary">Editar Perfil</button>
               </form>
             </div>
@@ -65,8 +53,6 @@ export default {
         email: '',
         avatarUrl: ''
       },
-      password: '',
-      selectedFile: null,
       editMode: false
     };
   },
@@ -77,7 +63,7 @@ export default {
         console.error('No se encontró el token en la cookie.');
         return;
       }
-      
+
       const response = await axios.get('http://localhost:8080/api/profile/me', {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -92,44 +78,20 @@ export default {
       try {
         const token = Cookies.get('token');
         if (!token) {
-          console.error('No se encontró el token en la cookie.');
-          return;
+          throw new Error('No se encontró el token en la cookie.');
         }
 
-        const { value: password, dismiss: cancel } = await Swal.fire({
-          title: 'Confirma tu contraseña',
-          input: 'password',
-          inputLabel: 'Contraseña',
-          inputPlaceholder: 'Ingresa tu contraseña',
-          inputAttributes: {
-            autocapitalize: 'off',
-            autocorrect: 'off'
-          },
-          showCancelButton: true,
-          confirmButtonText: 'Confirmar',
-          cancelButtonText: 'Cancelar'
-        });
+        const userUpdateData = {
+          email: this.user.email,
+          firstname: this.user.firstname,
+          lastname: this.user.lastname,
+          alias: this.user.alias
+        };
 
-        if (cancel) {
-          Swal.fire('Cancelado', 'No se ingresó ninguna contraseña', 'error');
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append('email', this.user.email);
-        formData.append('firstname', this.user.firstname);
-        formData.append('lastname', this.user.lastname);
-        formData.append('alias', this.user.alias);
-        formData.append('password', password);
-
-        if (this.selectedFile) {
-          formData.append('avatar', this.selectedFile);
-        }
-
-        const response = await axios.patch(`http://localhost:8080/api/users/${this.user.alias}`, formData, {
+        const response = await axios.patch(`http://localhost:8080/api/users/${this.user.alias}`, userUpdateData, {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'application/json'
           }
         });
 
@@ -137,8 +99,7 @@ export default {
           Swal.fire('Éxito', 'Perfil actualizado con éxito', 'success');
           this.editMode = false;
         } else {
-          console.error('Error al actualizar el perfil del usuario:', response.data);
-          Swal.fire('Error', 'No se pudo actualizar el perfil', 'error');
+          throw new Error('No se pudo actualizar el perfil.');
         }
       } catch (error) {
         console.error('Error al actualizar el perfil del usuario:', error);
@@ -180,7 +141,6 @@ export default {
 .btn-primary {
   background-color: #007bff;
   border-color: #007bff;
-
   transition: background-color 0.3s, border-color 0.3s;
 }
 
