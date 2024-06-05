@@ -1,66 +1,6 @@
 <template>
   <div>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container">
-        <router-link to="/" class="navbar-brand text-light">HYPNOS</router-link>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav me-auto">
-            <li class="nav-item">
-              <router-link to="/" class="nav-link text-light" aria-current="page">
-                <i class="bi bi-house-door-fill" style="color: white;"></i>
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/explore" class="nav-link text-light">
-                <i class="bi bi-compass-fill" style="color: white;"></i>
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/notifications" class="nav-link text-light">
-                <i class="bi bi-bell-fill" style="color: white;"></i>
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/create-publication" class="nav-link text-light">
-                <i class="bi bi-pencil-square" style="color: white;"></i>
-              </router-link>
-            </li>
-          </ul>
-
-          <form class="d-flex">
-            <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Buscar">
-            <button class="btn btn-outline-light" type="submit"><i class="bi bi-search"></i></button>
-          </form>
-
-          <ul class="navbar-nav ms-3">
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button"
-                data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-person-circle"></i> {{ user?.firstname || '' }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                <router-link to="/profile" class="router-link-custom">
-                  <li><a class="dropdown-item"><i class="bi bi-person-circle"></i> Perfil</a></li>
-                </router-link>
-                <router-link to="/settings" class="router-link-custom">
-                  <li><a class="dropdown-item"><i class="bi bi-gear"></i> Configuración</a></li>
-                </router-link>
-                <li>
-                  <hr class="dropdown-divider">
-                </li>
-                <li><a class="dropdown-item" href="#" @click="confirmLogout"><i class="bi bi-box-arrow-right"></i>
-                    Cerrar sesión</a></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-
+    <Navbar />
     <div class="container mt-4 d-flex justify-content-center">
       <div class="publication-card p-4 shadow-sm">
         <div v-if="!publication">
@@ -95,9 +35,13 @@
 
 <script>
 import axios from 'axios';
+import Navbar from './Navbar.vue';
 
 export default {
   name: 'PublicationDetail',
+  components: {
+    Navbar
+  },
   data() {
     return {
       publication: null,
@@ -110,11 +54,9 @@ export default {
   async created() {
     const postId = this.$route.params.id;
     try {
-      // Obtener la publicación
       const publicationResponse = await axios.get(`http://localhost:8080/api/publications/id/${postId}`);
       this.publication = publicationResponse.data;
 
-      // Obtener los datos del usuario actual
       const userResponse = await axios.get('http://localhost:8080/api/profile/me', {
         headers: {
           Authorization: `Bearer ${this.getCookie('token')}`
@@ -122,7 +64,6 @@ export default {
       });
       this.currentUser = userResponse.data;
 
-      // Verificar si el usuario actual es el propietario de la publicación
       if (this.currentUser && this.currentUser.id) {
         this.isOwner = this.publication.user.id === this.currentUser.id;
       }
@@ -131,7 +72,6 @@ export default {
     }
   },
   methods: {
-    // Función para obtener el valor de la cookie por su nombre
     getCookie(name) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
@@ -155,9 +95,7 @@ export default {
           text: this.newComment
         })
         .then(response => {
-          // Agregar el nuevo comentario a la lista de comentarios
           this.publication.comments.push(response.data);
-          // Limpiar el campo de texto del comentario
           this.newComment = '';
         })
         .catch(error => {

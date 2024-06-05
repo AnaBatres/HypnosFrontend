@@ -51,7 +51,7 @@
       const categories = ref([]);
       const newCategory = ref('');
   
-      // Obtener los detalles de la publicación para mostrar en el formulario
+      
       const getPostDetails = async () => {
         try {
           const response = await axios.get(`http://localhost:8080/api/publications/id/${postId.value}`);
@@ -63,7 +63,7 @@
         }
       };
   
-      // Obtener las categorías disponibles
+      
       const fetchCategories = async () => {
         try {
           const response = await axios.get('http://localhost:8080/api/categories');
@@ -73,12 +73,12 @@
         }
       };
   
-      // Función para eliminar una categoría seleccionada
+      
       const removeCategory = (categoryId) => {
         selectedCategories.value = selectedCategories.value.filter(category => category.id !== categoryId);
       };
   
-      // Función para agregar una nueva categoría
+      
       const addCategory = () => {
         const categoryToAdd = categories.value.find(category => category.id === parseInt(newCategory.value));
         if (categoryToAdd && !selectedCategories.value.some(category => category.id === categoryToAdd.id)) {
@@ -87,7 +87,7 @@
         }
       };
   
-      // Función para editar la publicación
+      
       const editPost = async () => {
         try {
           const token = Cookies.get('token');
@@ -113,7 +113,7 @@
         }
       };
   
-      // Llamar a las funciones para obtener los detalles de la publicación y las categorías al montar el componente
+      
       getPostDetails();
       fetchCategories();
   
@@ -131,6 +131,6 @@
   </script>
   
   <style scoped>
-  /* Estilos personalizados para el componente */
+  
   </style>
   

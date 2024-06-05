@@ -1,246 +1,262 @@
 <template>
-    <div>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container">
-                <router-link to="/" class="navbar-brand text-light">HYPNOS</router-link>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+  <div>
+    <Navbar />
+    <div class="container mt-4">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <!-- Caja del perfil -->
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <img id="avatarPreview" src="../imagenes/images2.jpg" alt="Profile Picture"
+                class="rounded-circle mb-3 border" style="border-width: 2px; width: 150px; height: 150px;">
+              <h1 class="profile-name">{{ user.firstname }} {{ user.lastname }}</h1>
+              <p class="profile-alias">{{ user.alias }}</p>
+              <div class="d-flex justify-content-center mt-3">
+                <button v-if="!isFollowing" class="btn btn-primary btn-sm me-2" @click="followOrUnfollow(user.id)">
+                  <i class="bi bi-person-plus-fill"></i> Seguir
                 </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <router-link to="/" class="nav-link text-light" aria-current="page">
-                                <i class="bi bi-house-door-fill" style="color: white;"></i>
-                            </router-link>
-                        </li>
-                        <li class="nav-item">
-                            <router-link to="/explore" class="nav-link text-light">
-                                <i class="bi bi-compass-fill" style="color: white;"></i>
-                            </router-link>
-                        </li>
-                        <li class="nav-item">
-                            <router-link to="/notifications" class="nav-link text-light">
-                                <i class="bi bi-bell-fill" style="color: white;"></i>
-                            </router-link>
-                        </li>
-                        <li class="nav-item">
-                            <router-link to="/create-publication" class="nav-link text-light">
-                                <i class="bi bi-pencil-square" style="color: white;"></i>
-                            </router-link>
-                        </li>
-                    </ul>
-
-                    <form class="d-flex">
-                        <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Buscar"
-                            v-model="user.search">
-                        <button class="btn btn-outline-light" type="button" v-on:click="redirectToUserProfile">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </form>
-
-                    <ul class="navbar-nav ms-3">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle"></i> {{ user?.firstname || '' }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                <router-link to="/profile" class="router-link-custom">
-                                    <li><a class="dropdown-item"><i class="bi bi-person-circle"></i> Perfil</a></li>
-                                </router-link>
-                                <router-link to="/settings" class="router-link-custom">
-                                    <li><a class="dropdown-item"><i class="bi bi-gear"></i> Configuración</a></li>
-                                </router-link>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li><a class="dropdown-item" href="#" @click="confirmLogout"><i
-                                            class="bi bi-box-arrow-right"></i>
-                                        Cerrar sesión</a></li>
-                            </ul>
-                        </li>
-                    </ul>
+                <button v-else class="btn btn-secondary btn-sm me-2" @click="followOrUnfollow(user.id)">
+                  <i class="bi bi-person-check-fill"></i> Siguiendo
+                </button>
+                <button class="btn btn-danger btn-sm" @click="blockUser(user.id)">
+                  <i class="bi bi-person-x-fill"></i> Bloquear
+                </button>
+              </div>
+              <div class="d-flex justify-content-around mt-4">
+                <div>
+                  <h6 class="text-muted">Siguiendo</h6>
+                  <h4 class="display-8 text-primary">{{ followingCount }}</h4>
                 </div>
-            </div>
-        </nav>
-
-        <div class="container mt-4">
-            <div class="row">
-                <div class="col-md-4">
-                    <!-- Código para mostrar la información del perfil -->
+                <div>
+                  <h6 class="text-muted">Seguidores</h6>
+                  <h4 class="display-8 text-primary">{{ followersCount }}</h4>
                 </div>
-                <div class="col-md-8">
-                    <div class="profile-container">
-                        <div class="profile-header">
-                            <div class="profile-header-left">
-                                <img :src="user.avatar" class="profile-avatar" alt="Profile Picture">
-                            </div>
-                            <div class="profile-header-right">
-                                <h1 class="profile-name">{{ user.firstname }} {{ user.lastname }}</h1>
-                                <p class="profile-alias">{{ user.alias }}</p>
-                                <button class="btn btn-primary btn-sm">
-                                    <i class="bi bi-person-plus-fill"></i> 
-                                </button>
-                                <button class="btn btn-danger btn-sm">
-                                    <i class="bi bi-person-x-fill"></i> Bloquear
-                                </button>
-                            </div>
-                        </div>
-                        <div class="profile-publications">
-                            <h2 class="section-title">Publicaciones</h2>
-                            <div v-if="publications.length === 0" class="text-center mt-4">
-                                <p>No hay publicaciones.</p>
-                            </div>
-                            <div v-else>
-                                <div v-for="post in publications" :key="post.id" class="card mb-3">
-                                    <router-link :to="'/publication/' + post.id" class="text-decoration-none">
-                                        <div class="card-header">
-                                            <h5 class="card-title text-center">
-                                                {{ post.title }}
-                                            </h5>
-                                            <p class="card-text text-center"><small class="text-muted">Publicación</small></p>
-                                        </div>
-                                    </router-link>
-                                </div>
-                            </div>
-                        </div>
+              </div>
+              <!-- Publicaciones del perfil -->
+              <h2 class="section-title mt-4">Publicaciones</h2>
+              <div v-if="publications.length === 0" class="text-center mt-4">
+                <p>No hay publicaciones.</p>
+              </div>
+              <div v-else>
+                <div v-for="post in publications" :key="post.id" class="card mb-3">
+                  <router-link :to="'/publication/' + post.id" class="text-decoration-none">
+                    <div class="card-header text-center">
+                      <h5 class="card-title">{{ post.title }}</h5>
+                      <p class="card-text"><small class="text-muted">Publicación</small></p>
                     </div>
+                  </router-link>
                 </div>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <script>
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import Navbar from './Navbar.vue';
 
 export default {
-    name: 'UserProfile',
-    data() {
-        return {
-            user: {},
-            publications: []
-        };
-    },
-    async created() {
-        try {
-            const alias = this.$route.params.alias;
-            const token = Cookies.get('token');
-            if (token) {
-                const userResponse = await axios.get(`http://localhost:8080/api/users/${alias}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                this.user = userResponse.data;
+  name: 'UserProfile',
+  components: {
+    Navbar
+  },
+  data() {
+    return {
+      user: {},
+      publications: [],
+      isFollowing: false,
+      searchQuery: '',
+      followers: [],
+      followings: [],
+      followingCount: 0,
+      followersCount: 0
+    };
+  },
+  async created() {
+    try {
+      const alias = this.$route.params.alias;
+      const token = Cookies.get('token');
+      if (token) {
+        const userResponse = await axios.get(`http://localhost:8080/api/users/${alias}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        this.user = userResponse.data;
+        await this.getFollowData(); // Llamar al método para obtener los datos de seguidores y seguidos
 
-                const publicationsResponse = await axios.get(`http://localhost:8080/api/publications/user/${alias}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                this.publications = publicationsResponse.data;
-            } else {
-                console.error('No se encontró el token en la cookie.');
+        const currentUserAlias = await this.getCurrentUserAlias();
+        if (currentUserAlias) {
+          const followingResponse = await axios.get(`http://localhost:8080/api/users/${currentUserAlias}/following`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
-        } catch (error) {
-            console.error('Error al cargar el perfil del usuario:', error);
+          });
+          const followingUsers = followingResponse.data;
+          this.isFollowing = followingUsers.some(followingUser => followingUser.id === this.user.id);
+
+          // Obtener publicaciones del usuario
+          const publicationsResponse = await axios.get(`http://localhost:8080/api/publications/user/${alias}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          this.publications = publicationsResponse.data;
+        } else {
+          console.error('No se pudo obtener el alias del usuario actual.');
         }
-    },
-    methods: {
-        formatDate(date) {
-            // Lógica para formatear la fecha según tus preferencias
-        }
+      } else {
+        console.error('No se encontró el token en la cookie.');
+      }
+    } catch (error) {
+      console.error('Error al cargar el perfil del usuario:', error);
     }
+  },
+  methods: {
+    async getFollowData() {
+      try {
+        const alias = this.$route.params.alias; // Obtener alias del parámetro de la ruta
+        const token = Cookies.get('token');
+        if (token) {
+          const followingResponse = await axios.get(`http://localhost:8080/api/users/${alias}/following`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const followersResponse = await axios.get(`http://localhost:8080/api/users/${alias}/followers`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          this.followings = followingResponse.data;
+          this.followers = followersResponse.data;
+          this.followingCount = this.followings.length;
+          this.followersCount = this.followers.length;
+        } else {
+          console.error('No se encontró el token en la cookie.');
+        }
+      } catch (error) {
+        console.error('Error al obtener los datos de seguidores y seguidos:',
+        error);
+      }
+    },
+    async followOrUnfollow(userId) {
+      try {
+        const currentUserId = await this.getCurrentUserId();
+        const token = Cookies.get('token');
+        if (!this.isFollowing) {
+          await axios.post(`http://localhost:8080/api/users/${currentUserId}/follow/${userId}`, {}, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+        } else {
+          await axios.delete(`http://localhost:8080/api/users/${currentUserId}/unfollow/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+        }
+        this.isFollowing = !this.isFollowing;
+        await this.getFollowData(); // Actualizar los datos de seguidores y seguidos después de seguir o dejar de seguir
+      } catch (error) {
+        console.error('Error al seguir o dejar de seguir al usuario:', error);
+      }
+    },
+    async getCurrentUserId() {
+      try {
+        const token = Cookies.get('token');
+        if (token) {
+          const response = await axios.get('http://localhost:8080/api/profile/me', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          const userData = response.data;
+          console.log('ID del usuario actual:', userData.id);
+          return userData.id;
+        } else {
+          console.error('No se encontró el token en la cookie.');
+          return null;
+        }
+      } catch (error) {
+        console.error('Error al obtener el ID del usuario actual:', error);
+        return null;
+      }
+    },
+    async getCurrentUserAlias() {
+      try {
+        const currentUserId = await this.getCurrentUserId();
+        if (currentUserId) {
+          const response = await axios.get(`http://localhost:8080/api/users/id/${currentUserId}`);
+          const userResponse = response.data;
+          const userAlias = userResponse.alias;
+          console.log('Alias del usuario actual:', userAlias);
+          return userAlias;
+        } else {
+          console.error('No se pudo obtener el ID del usuario actual.');
+          return null;
+        }
+      } catch (error) {
+        console.error('Error al obtener el alias del usuario actual:', error);
+        return null;
+      }
+    },
+    redirectToUserProfile() {
+      this.$router.push(`/user/${this.searchQuery}`);
+    },
+    confirmLogout() {
+      Cookies.remove('token');
+      this.$router.push('/login');
+    }
+  }
 };
 </script>
 
-<style scoped>
-.profile-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.profile-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.profile-header-left {
-    flex: 1;
-}
-
-.profile-header-right {
-    flex: 3;
-    padding-left: 20px;
-}
-
+<style>
 .profile-avatar {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    border: 4px solid #ffffff;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
 }
 
 .profile-name {
-    font-size: 24px;
-    margin-bottom: 5px;
+  font-size: 24px;
+  font-weight: bold;
 }
 
-.profile-email,
 .profile-alias {
-    margin-bottom: 10px;
-}
-
-.btn-primary {
-    background-color: #007bff;
-    color: #ffffff;
-    border: none;
-    border-radius: 20px;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.btn-primary:hover {
-    background-color: #0056b3;
+  font-size: 18px;
+  color: #6e7478;
 }
 
 .section-title {
-    font-size: 20px;
-    margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
-.no-publications {
-    text-align: center;
+.card-title {
+  color: #007bff;
+}
+.text-muted{
+  font-size: 1rem;
+  color: #000000 !important;
 }
 
-.publication {
-    margin-bottom: 20px;
-}
-
-.publication-title {
-    font-size: 20px;
-    margin-bottom: 5px;
-}
-
-.publication-text {
-    margin-bottom: 10px;
-}
-
-.publication-date {
-    font-style: italic;
-}
 </style>

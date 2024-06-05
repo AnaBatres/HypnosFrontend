@@ -1,103 +1,57 @@
 <template>
-  <div>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container">
-        <router-link to="/" class="navbar-brand text-light">HYPNOS</router-link>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav me-auto">
-            <li class="nav-item">
-              <router-link to="/" class="nav-link text-light" aria-current="page">
-                <i class="bi bi-house-door-fill" style="color: white;"></i>
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/explore" class="nav-link text-light">
-                <i class="bi bi-compass-fill" style="color: white;"></i>
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/notifications" class="nav-link text-light">
-                <i class="bi bi-bell-fill" style="color: white;"></i>
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/create-publication" class="nav-link text-light">
-                <i class="bi bi-pencil-square" style="color: white;"></i>
-              </router-link>
-            </li>
-          </ul>
-
-          <form class="d-flex">
-            <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Buscar"
-                   v-model="user.search">
-            <button class="btn btn-outline-light" type="button" v-on:click="redirectToUserProfile">
-              <i class="bi bi-search"></i>
-            </button>
-          </form>
-
-          <ul class="navbar-nav ms-3">
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button"
-                data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-person-circle"></i> {{ user?.firstname || '' }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                <router-link to="/profile" class="router-link-custom">
-                  <li><a class="dropdown-item"><i class="bi bi-person-circle"></i> Perfil</a></li>
-                </router-link>
-                <router-link to="/settings" class="router-link-custom">
-                  <li><a class="dropdown-item"><i class="bi bi-gear"></i> Configuración</a></li>
-                </router-link>
-                <li>
-                  <hr class="dropdown-divider">
-                </li>
-                <li><a class="dropdown-item" href="#S" @click="confirmLogout"><i class="bi bi-box-arrow-right"></i>
-                    Cerrar sesión</a></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-
+  <div id="app" class="no-bg">
+    <Navbar />
     <div class="container mt-4">
       <div class="row">
         <div class="col-md-4">
-          <div class="card">
+          <div class="card shadow-sm">
             <div class="card-body text-center">
-              <img :src="avatarPreviewUrl || 'https://via.placeholder.com/150'" alt="Profile Picture"
-                class="rounded-circle mb-3">
+              <img id="avatarPreview" src="../imagenes/images2.jpg" alt="Profile Picture"
+                class="rounded-circle mb-3 border" style="border-width: 2px; width: 150px; height: 150px;">
               <h5 class="card-title">{{ user?.firstname || 'Usuario' }}</h5>
               <p class="card-text">{{ user?.alias || 'Alias' }}</p>
+              <div class="d-flex justify-content-around mt-4">
+                <div>
+                  <h6 class="text-muted">Siguiendo</h6>
+                  <h4 class="display-4 text-primary">{{ followingCount }}</h4>
+                </div>
+                <div>
+                  <h6 class="text-muted">Seguidores</h6>
+                  <h4 class="display-4 text-primary">{{ followersCount }}</h4>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
         <div class="col-md-8">
-          <div class="card">
+          <div class="card shadow-sm">
             <div class="card-header">
               <ul class="nav nav-tabs card-header-tabs">
                 <li class="nav-item">
-                  <a class="nav-link active" href="#">Publicaciones</a>
+                  <a class="nav-link" :class="{ active: activeTab === 'publications' }" href="#"
+                    @click.prevent="setActiveTab('publications')">Publicaciones</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" :class="{ active: activeTab === 'followers' }" href="#"
+                    @click.prevent="setActiveTab('followers')">Seguidores</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" :class="{ active: activeTab === 'following' }" href="#"
+                    @click.prevent="setActiveTab('following')">Seguidos</a>
                 </li>
               </ul>
             </div>
             <div class="card-body">
-              <div class="tab-pane fade show active" id="publications" role="tabpanel"
-                aria-labelledby="publications-tab">
-                <div v-if="publications.length === 0" class="text-center mt-4">
+              <div v-if="activeTab === 'publications'">
+                <div v-if="!publications || publications.length === 0" class="text-center mt-4">
                   <p>No hay publicaciones.</p>
                 </div>
                 <div v-else>
-                  <div v-for="post in publications" :key="post.id" class="card mb-3">
+                  <div v-for="post in publications" :key="post.id" class="card mb-3 shadow-sm">
                     <router-link :to="'/publication/' + post.id" class="text-decoration-none">
                       <div class="card-header">
-                        <h5 class="card-title text-center">
-                          {{ post.title }}
-                        </h5>
+                        <h5 class="card-title text-center">{{ post.title }}</h5>
                         <div class="d-flex justify-content-center mt-3">
                           <button class="btn btn-outline-danger btn-sm me-2"><i class="bi bi-arrow-bar-up"></i>
                             Compartir</button>
@@ -110,6 +64,24 @@
                   </div>
                 </div>
               </div>
+              <div v-if="activeTab === 'followers'">
+                <ul v-if="followers">
+                  <li v-for="follower in followers" :key="follower.id">{{ follower.alias }}</li>
+                </ul>
+                <div v-else>
+                  <p>No hay seguidores.</p>
+                </div>
+              </div>
+              <div v-if="activeTab === 'following'">
+                <ul v-if="followings">
+                  <li v-for="following in followings" :key="following.id">
+                    <router-link :to="'/profile/' + following.alias">{{ following.alias }}</router-link>
+                  </li>
+                </ul>
+                <div v-else>
+                  <p>No hay seguidos.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -118,15 +90,19 @@
   </div>
 </template>
 
-
 <script>
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { RouterLink } from 'vue-router';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import Navbar from './Navbar.vue';
+import Swal from 'sweetalert2';
 
 export default {
   name: 'Profile',
+  components: {
+    Navbar
+  },
   data() {
     return {
       user: {
@@ -136,11 +112,17 @@ export default {
         email: '',
         alias: '',
         password: '',
-        search: ''
+        search: '',
+        dreamCategories: []
       },
       avatarPreviewUrl: '',
       publications: [],
-      selectedFile: null
+      followers: [],
+      followings: [],
+      selectedFile: null,
+      followingCount: 0,
+      followersCount: 0,
+      activeTab: 'publications'
     };
   },
   async created() {
@@ -157,29 +139,33 @@ export default {
         const userData = response.data;
         console.log(userData);
 
-        // Asignar datos del usuario
         this.user = {
           id: userData.id,
           firstname: userData.firstname,
           lastname: userData.lastname,
           email: userData.email,
           alias: userData.alias,
-          password: ''  // Mantener la contraseña vacía en esta instancia
+          password: userData.password,
+          dreamCategories: userData.dreamCategories
         };
 
-        // Asignar publicaciones del usuario
-        this.publications = userData.publications;
+        // Obtener publicaciones del usuario
+        const publicationsResponse = await axios.get(`http://localhost:8080/api/publications/user/id/${this.user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        this.publications = publicationsResponse.data;
 
-        // Obtener información detallada de cada publicación
-        await Promise.all(this.publications.map(async (post) => {
-          const postId = post.id;
-          const postResponse = await axios.get(`http://localhost:8080/api/publications/id/${postId}`);
-          const updatedPost = postResponse.data;
-          post.likes = updatedPost.likedByUsers;
-          post.comments = updatedPost.comments;
-          post.categories = updatedPost.categories;
-          post.title = updatedPost.title;
-        }));
+        // Actualiza los detalles de cada publicación dentro de la misma promesa
+        this.publications.forEach(post => {
+          post.likes = post.likedByUsers;
+          post.comments = post.comments;
+          post.categories = post.categories;
+        });
+
+        this.getFollowData();
       } else {
         console.error('No se encontró el token en la cookie.');
         this.$router.push('/login');
@@ -194,6 +180,35 @@ export default {
     }
   },
   methods: {
+    async getFollowData() {
+      try {
+        const token = Cookies.get('token');
+        if (token) {
+          const followingResponse = await axios.get(`http://localhost:8080/api/users/${this.user.alias}/following`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const followersResponse = await axios.get(`http://localhost:8080/api/users/${this.user.alias}/followers`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          this.followings = followingResponse.data || [];
+          this.followers = followersResponse.data || [];
+          this.followingCount = this.followings.length;
+          this.followersCount = this.followers.length;
+        } else {
+          console.error('No se encontró el token en la cookie.');
+        }
+      } catch (error) {
+        console.error('Error al obtener los datos de seguidores y seguidos:', error);
+      }
+    },
     async updateProfile() {
       try {
         const token = Cookies.get('token');
@@ -224,57 +239,40 @@ export default {
         console.error('Error al actualizar el perfil del usuario:', error);
       }
     },
-    async searchUserByAlias() {
-      try {
-        const token = Cookies.get('token');
-        if (token) {
-          const response = await axios.get(`http://localhost:8080/api/users/@${this.user.search}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-
-          const userData = response.data;
-          if (userData.id) {
-            // Redirigir al perfil del usuario encontrado
-            this.$router.push(`/profile/${userData.alias}`);
-          } else {
-            alert('Usuario no encontrado.');
-          }
-        } else {
-          console.error('No se encontró el token en la cookie.');
-        }
-      } catch (error) {
-        console.error('Error al buscar el usuario por alias:', error);
-        alert('Error al buscar el usuario por alias. Por favor, inténtalo de nuevo más tarde.');
-      }
-    },
-    async redirectToUserProfile() {
-      if (this.user.search.trim() !== '') {
-        this.searchUserByAlias();
-      }
-    },
     async deletePost(postId) {
-      if (confirm('¿Estás seguro de que deseas eliminar esta publicación?')) {
-        try {
-          const token = Cookies.get('token');
-          if (token) {
-            await axios.delete(`http://localhost:8080/api/publications/${postId}`, {
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: 'Esta acción eliminará permanentemente la publicación.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            const token = Cookies.get('token');
+            if (token) {
+              await axios.delete(`http://localhost:8080/api/publications/id/${postId}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
+              });
+              this.publications = this.publications.filter(post => post.id !== postId);
+            } else {
+              console.error('No se encontró el token en la cookie.');
+            }
+          } catch (error) {
+            console.error('Error al eliminar la publicación:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Hubo un problema al eliminar la publicación. Por favor, inténtalo de nuevo más tarde.'
             });
-            // Eliminar la publicación del array de publicaciones
-            this.publications = this.publications.filter(post => post.id !== postId);
-          } else {
-            console.error('No se encontró el token en la cookie.');
           }
-        } catch (error) {
-          console.error('Error al eliminar la publicación:', error);
-          alert('Error al eliminar la publicación. Por favor, inténtalo de nuevo más tarde.');
         }
-      }
+      });
     },
     handleFileUpload(event) {
       this.selectedFile = event.target.files[0];
@@ -283,9 +281,52 @@ export default {
         this.avatarPreviewUrl = e.target.result;
       };
       reader.readAsDataURL(this.selectedFile);
+    },
+    setActiveTab(tab) {
+      this.activeTab = tab;
     }
   }
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.icon {
+  font-size: 1.1rem;
+  margin-right: 0.5rem;
+}
+
+.no-bg {
+  background-color: white;
+}
+
+.card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+img.rounded-circle {
+  border: 2px solid #ddd;
+  padding: 5px;
+}
+
+.nav-tabs .nav-link.active {
+  background-color: #f8f9fa;
+  border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.display-4 {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-muted {
+  font-size: 1rem;
+  color: #000000 !important;
+}
+</style>

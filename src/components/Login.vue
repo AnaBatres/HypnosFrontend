@@ -27,14 +27,14 @@
                 </div>
                 <hr class="my-4">
                 <div class="d-grid mb-2">
-                  <button class="btn btn-google btn-login text-uppercase fw-bold" type="button">
+                  <a class="btn btn-google btn-login text-uppercase fw-bold" href="https://accounts.google.com/signin">
                     <i class="fab fa-google me-2"></i> Iniciar sesión con Google
-                  </button>
+                  </a>
                 </div>
                 <div class="d-grid">
-                  <button class="btn btn-facebook btn-login text-uppercase fw-bold" type="button">
+                  <a class="btn btn-facebook btn-login text-uppercase fw-bold" href="https://www.facebook.com/login/">
                     <i class="fab fa-facebook-f me-2"></i> Iniciar sesión con Facebook
-                  </button>
+                  </a>
                 </div>
                 <div class="text-center mt-3">
                   <p class="mb-0">¿No tienes cuenta? <router-link to="/" class="fw-bold">Regístrate</router-link></p>
@@ -50,6 +50,7 @@
 
 <script>
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import Cookies from 'js-cookie';
 
 export default {
@@ -61,6 +62,15 @@ export default {
       rememberPassword: false
     };
   },
+  created() {
+    const savedEmail = localStorage.getItem('email');
+    const savedPassword = localStorage.getItem('password');
+    if (savedEmail && savedPassword) {
+      this.email = savedEmail;
+      this.password = savedPassword;
+      this.rememberPassword = true;
+    }
+  },
   methods: {
     async login() {
       try {
@@ -69,26 +79,49 @@ export default {
           password: this.password
         });
 
-        // Extraer el token de la respuesta del servidor
         const token = response.data;
 
-        // Almacenar el token en una cookie
         Cookies.set('token', token, { expires: this.rememberPassword ? 7 : null }); // Expira en 7 días si se selecciona "Recordar contraseña"
-        // Redireccionar al perfil del usuario
+
+        // Guardar datos en localStorage si se ha marcado "Recordar contraseña"
+        if (this.rememberPassword) {
+          localStorage.setItem('email', this.email);
+          localStorage.setItem('password', this.password);
+        } else {
+          // Si no se recuerda la contraseña, eliminar los datos de localStorage
+          localStorage.removeItem('email');
+          localStorage.removeItem('password');
+        }
+
         this.$router.push('/profile');
       } catch (error) {
-        // Si el error es debido a credenciales incorrectas
         if (error.response && error.response.status === 403) {
-          alert('Correo electrónico o contraseña incorrectos.');
+          this.showCredentialsErrorAlert();
         } else {
-          // Si el error no es debido a credenciales incorrectas
-          alert('Error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.');
+          this.showGenericErrorAlert();
         }
       }
+    },
+    showCredentialsErrorAlert() {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error de credenciales',
+        text: 'Correo electrónico o contraseña incorrectos.',
+        confirmButtonText: 'Aceptar'
+      });
+    },
+    showGenericErrorAlert() {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.',
+        confirmButtonText: 'Aceptar'
+      });
     }
   }
 };
 </script>
+
 
 <style>
 body {

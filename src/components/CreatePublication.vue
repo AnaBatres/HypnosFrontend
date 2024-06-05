@@ -1,68 +1,6 @@
 <template>
   <div>
-    <!-- Barra de navegación -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container">
-        <router-link to="/" class="navbar-brand text-light">HYPNOS</router-link>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav me-auto">
-            <li class="nav-item">
-              <router-link to="/" class="nav-link text-light" aria-current="page">
-                <i class="bi bi-house-door-fill" style="color: white;"></i>
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/explore" class="nav-link text-light">
-                <i class="bi bi-compass-fill" style="color: white;"></i>
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/notifications" class="nav-link text-light">
-                <i class="bi bi-bell-fill" style="color: white;"></i>
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/create-publication" class="nav-link text-light">
-                <i class="bi bi-pencil-square" style="color: white;"></i>
-              </router-link>
-            </li>
-          </ul>
-          
-          
-          
-          <form class="d-flex">
-            <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Buscar">
-            <button class="btn btn-outline-light" type="submit"><i class="bi bi-search"></i></button>
-          </form>
-          
-          <ul class="navbar-nav ms-3">
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button"
-                data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-person-circle"></i> {{ user?.firstname || '' }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                <router-link to="/profile">
-                  <li><a class="dropdown-item"><i class="bi bi-person-circle"></i> Perfil</a></li>
-                </router-link>
-                <router-link to="/settings">
-                  <li><a class="dropdown-item"><i class="bi bi-gear"></i> Configuración</a></li>
-                </router-link>
-                <li>
-                  <hr class="dropdown-divider">
-                </li>
-                <li><a class="dropdown-item" href="#" @click="confirmLogout"><i class="bi bi-box-arrow-right"></i>
-                    Cerrar sesión</a></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
+    <Navbar />
     <!-- Contenido principal -->
     <div class="container mt-4">
       <div class="row justify-content-center">
@@ -111,13 +49,18 @@
 <script>
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import Swal from 'sweetalert2';
+import Navbar from './Navbar.vue';
 
 export default {
   name: 'CreatePost',
+  components: {
+    Navbar
+  },
   data() {
     return {
       form: {
-        title: '', // Agregar el campo title con un valor inicial vacío
+        title: '',
         text: '',
         categoryIds: [],
         userId: null
@@ -188,10 +131,24 @@ export default {
             }
           }
         );
-        this.message = 'La publicación se ha creado correctamente, vuelve a tu perfil para visualizarla.';
-        this.form.title = ''; // Limpiar el campo title después de enviarlo
-        this.form.text = '';
-        this.form.categoryIds = [];
+        
+        await Swal.fire({
+          title: '¡Éxito!',
+          text: 'La publicación se ha creado correctamente. ¿Quieres volver a tu perfil?',
+          icon: 'success',
+          showCancelButton: true,
+          confirmButtonText: 'Sí',
+          cancelButtonText: 'No'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.$router.push('/profile');
+          } else {
+            this.form.title = '';
+            this.form.text = '';
+            this.form.categoryIds = [];
+          }
+        });
+        
       } catch (error) {
         console.error('Error creating post:', error);
         this.message = 'Failed to create post.';

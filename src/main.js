@@ -4,7 +4,9 @@ import App from './App.vue';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import Cookies from 'js-cookie';
-
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faGhost } from '@fortawesome/free-solid-svg-icons';
 
 // Componentes
 import Login from './components/Login.vue';
@@ -12,18 +14,19 @@ import Register from './components/Register.vue';
 import Profile from './components/Profile.vue';
 import CreatePublication from './components/CreatePublication.vue'; 
 import UserSettings from './components/UserSettings.vue';
-import Index from './components/Index.vue';
+import ExploreFriends from './components/ExploreFriends.vue';
 import EditPublication from './components/EditPublication.vue';
 import Explore from './components/Explore.vue';
 import PublicationDetail from './components/PublicationDetail.vue';
 import UserProfile from './components/UserProfile.vue'
+import PublicationsByCategory from './components/PublicationsByCategory.vue';
 
 // Rutas
 const routes = [
   { path: '/', component: Register },
   { path: '/login', component: Login },
   { path: '/settings', component: UserSettings},
-  { path: '/index', component: Index},
+  { path: '/exploreFriends', component: ExploreFriends},
   { path: '/edit-publication/:id', component: EditPublication },
   { path: '/explore', component: Explore },
   { path: '/publication/:id', name: 'PublicationDetail', component: PublicationDetail },
@@ -31,6 +34,11 @@ const routes = [
     path: '/profile/:alias', // Esta es la ruta para el perfil del usuario
     name: 'UserProfile',
     component: UserProfile
+  },
+  {
+    path: '/publications/:categoryId',
+    component: PublicationsByCategory,
+    props: true 
   },
   { 
     path: '/profile', 
@@ -64,7 +72,10 @@ router.beforeEach((to, from, next) => {
   }
 });
 
+library.add(faGhost);
+
 // Creación de la aplicación de Vue y uso del enrutador
 const app = createApp(App);
 app.use(router);
+app.component('font-awesome-icon', FontAwesomeIcon);
 app.mount('#app');
