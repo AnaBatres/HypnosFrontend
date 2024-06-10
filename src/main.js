@@ -38,7 +38,6 @@ const routes = [
   {
     path: '/publications/:categoryId',
     component: PublicationsByCategory,
-    props: true 
   },
   { 
     path: '/profile', 

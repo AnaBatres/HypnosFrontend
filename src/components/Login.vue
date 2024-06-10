@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Formulario -->
     <div class="container">
       <div class="row">
         <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
@@ -81,14 +80,14 @@ export default {
 
         const token = response.data;
 
-        Cookies.set('token', token, { expires: this.rememberPassword ? 7 : null }); // Expira en 7 días si se selecciona "Recordar contraseña"
+        Cookies.set('token', token, { expires: this.rememberPassword ? 7 : null }); 
 
-        // Guardar datos en localStorage si se ha marcado "Recordar contraseña"
+        
         if (this.rememberPassword) {
           localStorage.setItem('email', this.email);
           localStorage.setItem('password', this.password);
         } else {
-          // Si no se recuerda la contraseña, eliminar los datos de localStorage
+         
           localStorage.removeItem('email');
           localStorage.removeItem('password');
         }

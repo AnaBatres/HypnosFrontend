@@ -6,7 +6,6 @@
       <div v-else>
         <div class="row">
           <div v-for="(publication, index) in followedPublications" :key="index" class="col-md-6 mb-4">
-            <!-- Renderizar las publicaciones aquí -->
             <div class="card">
               <div class="card-body">
                 <h5 class="card-title">{{ publication.title }}</h5>
@@ -87,5 +86,5 @@ export default {
 </script>
 
 <style scoped>
-/* Estilos personalizados */
+
 </style>

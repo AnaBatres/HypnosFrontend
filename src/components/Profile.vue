@@ -23,7 +23,6 @@
             </div>
           </div>
         </div>
-
         <div class="col-md-8">
           <div class="card shadow-sm">
             <div class="card-header">
@@ -51,13 +50,22 @@
                   <div v-for="post in publications" :key="post.id" class="card mb-3 shadow-sm">
                     <router-link :to="'/publication/' + post.id" class="text-decoration-none">
                       <div class="card-header">
-                        <h5 class="card-title text-center">{{ post.title }}</h5>
-                        <div class="d-flex justify-content-center mt-3">
-                          <button class="btn btn-outline-danger btn-sm me-2"><i class="bi bi-arrow-bar-up"></i>
-                            Compartir</button>
-                          <router-link :to="'/edit-publication/' + post.id"
-                            class="btn btn-outline-danger btn-sm me-2">Editar</router-link>
-                          <button class="btn btn-danger btn-sm me-2" @click="deletePost(post.id)">Eliminar</button>
+                        <h5 class="card-title text-center text-dark">{{ post.title }}</h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div>
+                            <p class="mb-0">
+                              <i class="bi bi-heart-fill text-danger"></i> <span class="fw-bold fs-5 text-black">{{
+                                post.likesCount }}</span>
+                            </p>
+                          </div>
+                          <div>
+                            <button class="btn btn-outline-danger btn-sm me-2"><i class="bi bi-arrow-bar-up"></i>
+                              Compartir</button>
+                            <router-link :to="'/edit-publication/' + post.id"
+                              class="btn btn-outline-danger btn-sm me-2">Editar</router-link>
+                            <button class="btn btn-danger btn-sm" v-if="user.isAdmin || post.creatorId === user.id"
+                              @click="confirmDelete(post.id)">Eliminar</button>
+                          </div>
                         </div>
                       </div>
                     </router-link>
@@ -65,7 +73,7 @@
                 </div>
               </div>
               <div v-if="activeTab === 'followers'">
-                <ul v-if="followers">
+                <ul v-if="followers.length > 0">
                   <li v-for="follower in followers" :key="follower.id">{{ follower.alias }}</li>
                 </ul>
                 <div v-else>
@@ -73,7 +81,7 @@
                 </div>
               </div>
               <div v-if="activeTab === 'following'">
-                <ul v-if="followings">
+                <ul v-if="followings.length > 0">
                   <li v-for="following in followings" :key="following.id">
                     <router-link :to="'/profile/' + following.alias">{{ following.alias }}</router-link>
                   </li>
@@ -132,7 +140,7 @@ export default {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
-          }
+          },
         });
 
         const userData = response.data;
@@ -147,20 +155,26 @@ export default {
           password: userData.password
         };
 
-        // Obtener publicaciones del usuario
         const publicationsResponse = await axios.get(`http://localhost:8080/api/publications/user/id/${this.user.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
+
         this.publications = publicationsResponse.data;
 
-        // Actualiza los detalles de cada publicación dentro de la misma promesa
-        this.publications.forEach(post => {
-          post.likes = post.likedByUsers;
-          post.comments = post.comments;
-        });
+        for (let i = 0; i < this.publications.length; i++) {
+          const postId = this.publications[i].id;
+          const likesCountResponse = await axios.get(`http://localhost:8080/api/publications/${postId}/likes`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          this.publications[i].likesCount = likesCountResponse.data;
+          console.log(this.publications[i].likesCount);
+        }
 
         this.getFollowData();
       } else {
@@ -176,29 +190,30 @@ export default {
       }
     }
   },
+
   methods: {
     async getFollowData() {
       try {
         const token = Cookies.get('token');
         if (token) {
-          const followingResponse = await axios.get(`http://localhost:8080/api/users/${this.user.alias}/following`, {
+          const followersResponse = await axios.get(`http://localhost:8080/api/follow/followers/${this.user.id}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           });
 
-          const followersResponse = await axios.get(`http://localhost:8080/api/users/${this.user.alias}/followers`, {
+          const followingResponse = await axios.get(`http://localhost:8080/api/follow/following/${this.user.id}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           });
 
-          this.followings = followingResponse.data || [];
-          this.followers = followersResponse.data || [];
-          this.followingCount = this.followings.length;
+          this.followers = followersResponse.data;
+          this.followings = followingResponse.data;
           this.followersCount = this.followers.length;
+          this.followingCount = this.followings.length;
         } else {
           console.error('No se encontró el token en la cookie.');
         }
@@ -218,9 +233,7 @@ export default {
           }
           if (this.selectedFile) {
             formData.append('avatar', this.selectedFile);
-          }
-
-          const response = await axios.put(`http://localhost:8080/api/users/id/${userId}`, formData, {
+          } const response = await axios.put(`http://localhost:8080/api/users/id/${userId}`, formData, {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'multipart/form-data'
@@ -236,7 +249,7 @@ export default {
         console.error('Error al actualizar el perfil del usuario:', error);
       }
     },
-    async deletePost(postId) {
+    async confirmDelete(postId) {
       Swal.fire({
         title: '¿Estás seguro?',
         text: 'Esta acción eliminará permanentemente la publicación.',
@@ -248,34 +261,37 @@ export default {
         cancelButtonText: 'Cancelar'
       }).then(async (result) => {
         if (result.isConfirmed) {
-          try {
-            const token = Cookies.get('token');
-            if (token) {
-              await axios.delete(`http://localhost:8080/api/publications/${postId}`, {
-                headers: {
-                  Authorization: `Bearer ${token}`
-                }
-              });
-              this.publications = this.publications.filter(post => post.id !== postId);
-              // Mostrar SweetAlert de éxito
-              Swal.fire({
-                icon: 'success',
-                title: 'Publicación eliminada',
-                text: 'La publicación se ha eliminado correctamente.'
-              });
-            } else {
-              console.error('No se encontró el token en la cookie.');
-            }
-          } catch (error) {
-            console.error('Error al eliminar la publicación:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Hubo un problema al eliminar la publicación. Por favor, inténtalo de nuevo más tarde.'
-            });
-          }
+          await this.deletePost(postId);
         }
       });
+    },
+    async deletePost(postId) {
+      try {
+        const token = Cookies.get('token');
+        if (token) {
+          await axios.delete(`http://localhost:8080/api/publications/${postId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          this.publications = this.publications.filter(post => post.id !== postId);
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Publicación eliminada',
+            text: 'La publicación se ha eliminado correctamente.'
+          });
+        } else {
+          console.error('No se encontró el token en la cookie.');
+        }
+      } catch (error) {
+        console.error('Error al eliminar la publicación:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Hubo un problema al eliminar la publicación. Por favor, inténtalo de nuevo más tarde.'
+        });
+      }
     },
     setActiveTab(tab) {
       this.activeTab = tab;

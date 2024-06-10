@@ -132,10 +132,9 @@ export default {
         const token = Cookies.get('token');
 
         if (token) {
-          // Eliminar el token de la cookie
+         
           Cookies.remove('token');
 
-          // Redireccionar al usuario a la página de inicio de sesión
           this.$router.push('/login');
         } else {
           console.error('No se encontró el token en la cookie.');

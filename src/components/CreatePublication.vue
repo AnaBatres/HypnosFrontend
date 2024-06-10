@@ -1,7 +1,6 @@
 <template>
   <div>
     <Navbar />
-    <!-- Contenido principal -->
     <div class="container mt-4">
       <div class="row justify-content-center">
         <div class="col-lg-8">
@@ -81,8 +80,13 @@ export default {
   },
   methods: {
     async fetchCategories() {
+      const token = Cookies.get('token');
       try {
-        const response = await axios.get('http://localhost:8080/api/categories');
+        const response = await axios.get('http://localhost:8080/api/categories', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         this.categories = response.data;
       } catch (error) {
         console.error('Error fetching categories:', error);

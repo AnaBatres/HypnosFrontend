@@ -19,13 +19,13 @@
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/notifications" class="nav-link text-light">
-              <i class="bi bi-bell-fill icon"></i>
+            <router-link to="/create-publication" class="nav-link text-light">
+              <i class="bi bi-pencil-square icon"></i>
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/create-publication" class="nav-link text-light">
-              <i class="bi bi-pencil-square icon"></i>
+            <router-link to="/favorites" class="nav-link text-light">
+              <i class="bi bi-heart-fill icon"></i>
             </router-link>
           </li>
           <li class="nav-item dropdown">
@@ -98,8 +98,17 @@ export default {
   methods: {
     async fetchDreamCategories() {
       try {
-        const response = await axios.get('http://localhost:8080/api/categories');
-        this.dreamCategories = response.data;
+        const token = Cookies.get('token');
+        if (token) {
+          const response = await axios.get('http://localhost:8080/api/categories', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          this.dreamCategories = response.data;
+        } else {
+          console.error('No se encontró el token en la cookie.');
+        }
       } catch (error) {
         console.error('Error al obtener las categorías de sueños:', error);
       }
@@ -171,10 +180,10 @@ export default {
         const token = Cookies.get('token');
 
         if (token) {
-          // Eliminar el token de la cookie
+        
           Cookies.remove('token');
 
-          // Redireccionar al usuario a la página de inicio de sesión
+        
           this.$router.push('/login');
         } else {
           console.error('No se encontró el token en la cookie.');

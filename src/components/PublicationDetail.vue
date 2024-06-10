@@ -3,28 +3,22 @@
     <Navbar />
     <div class="container mt-4 d-flex justify-content-center">
       <div class="publication-card p-4 shadow-sm">
-        <div v-if="!publication">
+        <div v-if="loading">
           <p>Cargando...</p>
         </div>
         <div v-else>
-          <h1 class="publication-title">{{ publication.title }}</h1>
+          <h1 class="publication-title text-dark">{{ publication.title }}</h1>
           <p>{{ publication.text }}</p>
           <div>
-            <span v-for="(category, index) in publication.categories" :key="index"
-              class="badge bg-secondary me-1">{{ category.name }}</span>
+            <span v-for="(category, index) in publication.categories" :key="index" class="badge bg-secondary me-1">{{ category.name }}</span>
           </div>
-
-          <!-- Comentarios -->
           <div v-if="!isOwner">
-            <!-- Cuadro de comentario -->
             <div class="mt-4">
               <textarea class="form-control" rows="3" v-model="newComment"></textarea>
               <button class="btn btn-primary mt-2" @click="commentOnPublication">Comentar</button>
             </div>
-
-            <!-- Botón de "Me gusta" -->
             <div class="mt-3">
-              <button @click="likePublication">Me gusta</button>
+              <button @click="likePublication" class="btn btn-dark">Me gusta</button>
             </div>
           </div>
         </div>
@@ -36,6 +30,8 @@
 <script>
 import axios from 'axios';
 import Navbar from './Navbar.vue';
+import Cookies from 'js-cookie';
+
 
 export default {
   name: 'PublicationDetail',
@@ -48,30 +44,41 @@ export default {
       currentUser: null,
       isOwner: false,
       isLiked: false,
-      newComment: ''
+      newComment: '',
+      loading: true
     };
   },
   async created() {
-    const postId = this.$route.params.id;
     try {
-      const publicationResponse = await axios.get(`http://localhost:8080/api/publications/id/${postId}`);
-      this.publication = publicationResponse.data;
-
-      const userResponse = await axios.get('http://localhost:8080/api/profile/me', {
+      const token = Cookies.get('token');
+      const postId = this.$route.params.id;
+      const publicationResponse = await axios.get(`http://localhost:8080/api/publications/id/${postId}`, {
         headers: {
-          Authorization: `Bearer ${this.getCookie('token')}`
-        }
+            Authorization: `Bearer ${token}`
+          }
       });
-      this.currentUser = userResponse.data;
-
-      if (this.currentUser && this.currentUser.id) {
-        this.isOwner = this.publication.user.id === this.currentUser.id;
-      }
+      this.publication = publicationResponse.data;
+      await this.fetchCurrentUser();
+      this.isOwner = this.publication.user.id === this.currentUser.id;
     } catch (error) {
       console.error('Error al obtener los datos:', error);
+    } finally {
+      this.loading = false;
     }
   },
   methods: {
+    async fetchCurrentUser() {
+      try {
+        const userResponse = await axios.get('http://localhost:8080/api/profile/me', {
+          headers: {
+            Authorization: `Bearer ${this.getCookie('token')}`
+          }
+        });
+        this.currentUser = userResponse.data;
+      } catch (error) {
+        console.error('Error al obtener el usuario actual:', error);
+      }
+    },
     getCookie(name) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
@@ -106,6 +113,7 @@ export default {
   }
 };
 </script>
+
 <style scoped>
 .container {
   display: flex;
@@ -133,7 +141,7 @@ export default {
 
 .publication-title {
   font-size: 2.5rem;
-  color: #007bff;
+  color: black;
   text-align: center;
   text-transform: uppercase;
   font-weight: bold;

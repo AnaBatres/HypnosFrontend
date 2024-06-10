@@ -2,15 +2,19 @@
   <div>
     <Navbar />
     <div class="container mt-4">
-      <h2 class="text-center mb-4">Explora los sueños de los usuarios de HYPNOS</h2>
+      <div class="bg-dark p-3 mb-4">
+        <h2 class="text-center text-white mb-0">Explora los sueños de los usuarios de HYPNOS</h2>
+      </div>
       <div v-if="loading" class="text-center">Cargando...</div>
       <div v-else>
         <div class="row">
-          <div v-for="(publication, index) in paginatedPublications" :key="publication.id" class="col-md-6 mb-4">
+          <div v-for="(publication, index) in paginatedPublicationsWithAlias" :key="publication.id" class="col-md-6 mb-4">
             <div class="card h-100" @click="viewPublication(publication.id)">
               <div class="card-body">
-                <p class="card-text text-muted" v-if="publication.user">{{ publication.user.alias }}</p>
-                <h5 class="card-title">{{ publication.title }}</h5>
+                <p class="card-text" v-if="publication.user">
+                  <span class="alias-header bg-blue text-white">{{ publication.user.alias }}</span>
+                </p>
+                <h5 class="card-title text-dark">{{ publication.title }}</h5>
               </div>
             </div>
           </div>
@@ -18,13 +22,13 @@
         <nav aria-label="Page navigation">
           <ul class="pagination justify-content-center mt-4">
             <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
-              <a class="page-link" href="#" @click.prevent="previousPage">Anterior</a>
+              <a class="page-link bg-dark text-white" href="#" @click.prevent="previousPage">&laquo;</a>
             </li>
-            <li v-for="page in totalPages" :key="page" class="page-item" :class="{ 'active': page === currentPage }">
-              <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
+            <li class="page-item" v-for="page in totalPages" :key="page" :class="{ 'active': page === currentPage }">
+              <a class="page-link bg-dark text-white" href="#" @click.prevent="changePage(page)">{{ page }}</a>
             </li>
             <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
-              <a class="page-link" href="#" @click.prevent="nextPage">Siguiente</a>
+              <a class="page-link bg-dark text-white" href="#" @click.prevent="nextPage">&raquo;</a>
             </li>
           </ul>
         </nav>
@@ -48,7 +52,7 @@ export default {
       paginatedPublications: [],
       loading: false,
       currentPage: 1,
-      pageSize: 6 // Cambiar el tamaño de la página aquí
+      pageSize: 6
     };
   },
   created() {
@@ -56,26 +60,36 @@ export default {
 
     axios.get('http://localhost:8080/api/publications/random')
       .then(async response => {
-        const userId = await this.fetchCurrentUserId(); // Obtener ID del usuario actual
+        console.log('Response from /api/publications/random:', response.data);
+
+        const userId = await this.fetchCurrentUserId();
+        console.log('Current user ID:', userId);
 
         this.publications = response.data.map(item => {
-          const publicationUserId = item[4];
+          console.log('Mapping item:', item);
+          const publicationUserId = item.userId || item[4]; 
           return {
-            id: item[0],
-            title: item[3],
-            text: item[2],
+            id: item.id || item[0], 
+            title: item.title || item[3],
+            text: item.text || item[2], 
             userId: publicationUserId
           };
         });
 
+        console.log('Mapped publications:', this.publications);
+
         this.publications = this.publications.filter(publication => publication.userId !== userId);
+        console.log('Filtered publications (excluding current user):', this.publications);
 
-        // Llamar a getUserById para cada publicación para obtener el alias del usuario
-        this.publications.forEach(publication => {
-          this.getUserById(publication.userId);
-        });
+        await Promise.all(this.publications.map(async publication => {
+          const alias = await this.getUserAliasByPostId(publication.id);
+          if (alias) {
+            publication.user = { alias };
+          }
+        }));
 
-        // Configuración inicial de paginación
+        console.log('Publications with user alias:', this.publications);
+
         this.paginatePublications();
 
         this.loading = false;
@@ -94,25 +108,22 @@ export default {
             Authorization: `Bearer ${token}`
           }
         });
+        console.log('Response from /api/profile/me:', response.data);
         return response.data.id;
       } catch (error) {
         console.error('Error al obtener el ID de usuario actual:', error);
         return null;
       }
     },
-    async getUserById(userId) {
+    async getUserAliasByPostId(postId) {
       try {
-        const response = await axios.get(`http://localhost:8080/api/users/id/${userId}`);
-        // Actualizar el usuario de la publicación con los datos obtenidos
-        const user = response.data;
-        this.publications.forEach(publication => {
-          if (publication.userId === userId) {
-            publication.user = user;
-          }
-        });
+        const response = await axios.get(`http://localhost:8080/api/publications/id/${postId}`);
+        console.log(`Response from /api/publications/id/${postId}:`, response.data);
+        const publication = response.data;
+        return publication.user ? publication.user.alias : null;
       } catch (error) {
-        console.error('Error al obtener el usuario por ID:', error);
-        // Manejar el error de red aquí
+        console.error('Error al obtener el alias del usuario por ID de publicación:', error);
+        return null;
       }
     },
     viewPublication(id) {
@@ -142,6 +153,9 @@ export default {
   computed: {
     totalPages() {
       return Math.ceil(this.publications.length / this.pageSize);
+    },
+    paginatedPublicationsWithAlias() {
+      return this.paginatedPublications.filter(publication => publication.user && publication.user.alias);
     }
   }
 };
@@ -159,5 +173,12 @@ export default {
 
 .card:hover {
   background-color: #f8f9fa;
+}
+
+.alias-header {
+  background-color: #007bff;
+  color: #fff;
+  padding: 3px 6px;
+  border-radius: 4px;
 }
 </style>
