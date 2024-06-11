@@ -61,10 +61,8 @@
                           <div>
                             <button class="btn btn-outline-danger btn-sm me-2"><i class="bi bi-arrow-bar-up"></i>
                               Compartir</button>
-                            <router-link :to="'/edit-publication/' + post.id"
-                              class="btn btn-outline-danger btn-sm me-2">Editar</router-link>
-                            <button class="btn btn-danger btn-sm" v-if="user.isAdmin || post.creatorId === user.id"
-                              @click="confirmDelete(post.id)">Eliminar</button>
+                            <button class="btn btn-danger btn-sm" @click="confirmDelete(post.id)"> Eliminar
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -120,7 +118,6 @@ export default {
         email: '',
         alias: '',
         password: '',
-        search: ''
       },
       avatarPreviewUrl: '',
       publications: [],
@@ -152,7 +149,7 @@ export default {
           lastname: userData.lastname,
           email: userData.email,
           alias: userData.alias,
-          password: userData.password
+          password: userData.password,
         };
 
         const publicationsResponse = await axios.get(`http://localhost:8080/api/publications/user/id/${this.user.id}`, {
@@ -177,6 +174,7 @@ export default {
         }
 
         this.getFollowData();
+        console.log(this.followers);
       } else {
         console.error('No se encontró el token en la cookie.');
         this.$router.push('/login');
@@ -210,8 +208,12 @@ export default {
             }
           });
 
-          this.followers = followersResponse.data;
-          this.followings = followingResponse.data;
+          this.followers = followersResponse.data.map(follow => follow.follower);
+          this.followings = followingResponse.data.map(follow => follow.followed);
+
+          console.log("Followers:", this.followers);
+          console.log("Following:", this.followings);
+
           this.followersCount = this.followers.length;
           this.followingCount = this.followings.length;
         } else {
@@ -221,49 +223,19 @@ export default {
         console.error('Error al obtener los datos de seguidores y seguidos:', error);
       }
     },
-    async updateProfile() {
-      try {
-        const token = Cookies.get('token');
-        if (token) {
-          const userId = this.user.id;
-          const formData = new FormData();
-          formData.append('email', this.user.email);
-          if (this.user.password) {
-            formData.append('password', this.user.password);
-          }
-          if (this.selectedFile) {
-            formData.append('avatar', this.selectedFile);
-          } const response = await axios.put(`http://localhost:8080/api/users/id/${userId}`, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          });
-
-          this.user = response.data;
-          alert('Perfil actualizado exitosamente');
-        } else {
-          console.error('No se encontró el token en la cookie.');
-        }
-      } catch (error) {
-        console.error('Error al actualizar el perfil del usuario:', error);
-      }
-    },
     async confirmDelete(postId) {
-      Swal.fire({
+      const result = await Swal.fire({
         title: '¿Estás seguro?',
-        text: 'Esta acción eliminará permanentemente la publicación.',
+        text: 'No podrás revertir esto.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        cancelButtonColor: '#6c757d',
         confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-      }).then(async (result) => {
-        if (result.isConfirmed) {
-          await this.deletePost(postId);
-        }
+        cancelButtonText: 'No, cancelar'
       });
+
+      if (result.isConfirmed) {
+        this.deletePost(postId);
+      }
     },
     async deletePost(postId) {
       try {
@@ -274,12 +246,15 @@ export default {
               Authorization: `Bearer ${token}`
             }
           });
+
           this.publications = this.publications.filter(post => post.id !== postId);
 
           Swal.fire({
             icon: 'success',
             title: 'Publicación eliminada',
             text: 'La publicación se ha eliminado correctamente.'
+          }).then(() => {
+            this.$forceUpdate();
           });
         } else {
           console.error('No se encontró el token en la cookie.');

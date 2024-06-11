@@ -68,7 +68,7 @@ export default {
               password: ''
             };
 
-            const followingResponse = await axios.get(`http://localhost:8080/api/users/${this.user.alias}/following`);
+            const followingResponse = await axios.get(`http://localhost:8080/api/follow/following/${this.user.id}`);
             const following = followingResponse.data;
             const publicationPromises = following.map(async user => {
               const publicationsResponse = await axios.get(`http://localhost:8080/api/publications/user/id/${user.id}`);

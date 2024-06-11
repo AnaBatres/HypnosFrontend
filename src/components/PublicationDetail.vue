@@ -17,8 +17,20 @@
               <textarea class="form-control" rows="3" v-model="newComment"></textarea>
               <button class="btn btn-primary mt-2" @click="commentOnPublication">Comentar</button>
             </div>
-            <div class="mt-3">
-              <button @click="likePublication" class="btn btn-dark">Me gusta</button>
+            <div class="mt-3 d-flex justify-content-end">
+              <button @click="likePublication" class="btn btn-link text-danger p-0">
+                <i class="fa fa-heart-o"></i>
+              </button>
+            </div>
+          </div>
+          <div class="comments mt-4">
+            <div v-for="(comment, index) in visibleComments" :key="index" class="comment mb-2">
+              <p><strong>{{ comment.user.alias }}</strong></p>
+              <p>{{ comment.text }}</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <button v-if="visibleComments.length < filteredComments.length" @click="loadMoreComments" class="btn btn-link">Ver más</button>
+              <button v-if="visibleComments.length > 3" @click="showLessComments" class="btn btn-link">Mostrar menos</button>
             </div>
           </div>
         </div>
@@ -26,12 +38,10 @@
     </div>
   </div>
 </template>
-
 <script>
 import axios from 'axios';
 import Navbar from './Navbar.vue';
 import Cookies from 'js-cookie';
-
 
 export default {
   name: 'PublicationDetail',
@@ -45,7 +55,9 @@ export default {
       isOwner: false,
       isLiked: false,
       newComment: '',
-      loading: true
+      loading: true,
+      publicationComments: [],
+      visibleComments: [] 
     };
   },
   async created() {
@@ -54,24 +66,43 @@ export default {
       const postId = this.$route.params.id;
       const publicationResponse = await axios.get(`http://localhost:8080/api/publications/id/${postId}`, {
         headers: {
-            Authorization: `Bearer ${token}`
-          }
+          Authorization: `Bearer ${token}`
+        }
       });
       this.publication = publicationResponse.data;
       await this.fetchCurrentUser();
       this.isOwner = this.publication.user.id === this.currentUser.id;
+      await this.getPublicationComments();
     } catch (error) {
       console.error('Error al obtener los datos:', error);
     } finally {
       this.loading = false;
     }
   },
+  computed: {
+    filteredComments() {
+      return this.publicationComments.filter(comment => comment.publication.id === this.publication.id);
+    }
+  },
   methods: {
+    async getPublicationComments() {
+      try {
+        const response = await axios.get(`http://localhost:8080/api/comments`, {
+          headers: {
+            Authorization: `Bearer ${Cookies.get('token')}`
+          }
+        });
+        this.publicationComments = response.data;
+        this.visibleComments = this.filteredComments.slice(0, 3);
+      } catch (error) {
+        console.error('Error al obtener los comentarios de la publicación:', error);
+      }
+    },
     async fetchCurrentUser() {
       try {
         const userResponse = await axios.get('http://localhost:8080/api/profile/me', {
           headers: {
-            Authorization: `Bearer ${this.getCookie('token')}`
+            Authorization: `Bearer ${Cookies.get('token')}`
           }
         });
         this.currentUser = userResponse.data;
@@ -79,14 +110,13 @@ export default {
         console.error('Error al obtener el usuario actual:', error);
       }
     },
-    getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-    },
     likePublication() {
       if (!this.isOwner) {
-        axios.post(`http://localhost:8080/api/publications/${this.publication.id}/like`)
+        axios.post(`http://localhost:8080/api/publications/${this.publication.id}/like`, {}, {
+          headers: {
+            Authorization: `Bearer ${Cookies.get('token')}`
+          }
+        })
           .then(response => {
             this.isLiked = !this.isLiked;
             console.log('Publicación likeada');
@@ -97,17 +127,34 @@ export default {
       }
     },
     commentOnPublication() {
-      if (!this.isOwner) {
-        axios.post(`http://localhost:8080/api/publications/${this.publication.id}/comments`, {
-          text: this.newComment
+      if (!this.isOwner && this.newComment.trim()) {
+        axios.post(`http://localhost:8080/api/comments/create`, {
+          text: this.newComment,
+          userId: this.currentUser.id,
+          publicationId: this.publication.id
+        }, {
+          headers: {
+            Authorization: `Bearer ${Cookies.get('token')}`
+          }
         })
         .then(response => {
-          this.publication.comments.push(response.data);
+          this.publicationComments.unshift(response.data); 
+          this.visibleComments = this.filteredComments.slice(0, this.visibleComments.length + 1);
           this.newComment = '';
         })
         .catch(error => {
           console.error('Error al comentar en la publicación:', error);
         });
+      }
+    },
+    loadMoreComments() {
+      const currentLength = this.visibleComments.length;
+      const moreComments = this.filteredComments.slice(currentLength, currentLength + 3);
+      this.visibleComments = this.visibleComments.concat(moreComments);
+    },
+    showLessComments() {
+      if (this.visibleComments.length > 3) {
+        this.visibleComments = this.visibleComments.slice(0, this.visibleComments.length - 3);
       }
     }
   }
@@ -123,7 +170,7 @@ export default {
 .publication-card {
   background-color: #ffffff;
   border-radius: 8px;
-  max-width: 800px;
+  max-width: 1000px;
   width: 100%;
 }
 
@@ -135,9 +182,7 @@ export default {
   margin-top: 1.5rem;
 }
 
-.p-4 {
-  padding: 1.5rem;
-}
+
 
 .publication-title {
   font-size: 2.5rem;
@@ -154,16 +199,11 @@ export default {
 }
 
 .comment-section button {
-  display: block;
   width: 100%;
 }
 
-.comments {
-  margin-top: 2rem;
-}
-
 .comment {
-  background-color: #f8f9fa;
+  background-color: #c2c8ce;
   padding: 1rem;
   border-radius: 4px;
 }

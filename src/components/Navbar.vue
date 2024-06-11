@@ -24,7 +24,7 @@
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/favorites" class="nav-link text-light">
+            <router-link to="/exploreByCategories" class="nav-link text-light">
               <i class="bi bi-heart-fill icon"></i>
             </router-link>
           </li>
@@ -137,7 +137,7 @@ export default {
       try {
         const token = Cookies.get('token');
         if (token) {
-          const response = await axios.get(`http://localhost:8080/api/users/@${this.user.search}`, {
+          const response = await axios.get(`http://localhost:8080/api/users/${this.user.search}`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }

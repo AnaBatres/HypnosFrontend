@@ -18,8 +18,11 @@ import ExploreFriends from './components/ExploreFriends.vue';
 import EditPublication from './components/EditPublication.vue';
 import Explore from './components/Explore.vue';
 import PublicationDetail from './components/PublicationDetail.vue';
-import UserProfile from './components/UserProfile.vue'
+import UserProfile from './components/UserProfile.vue';
 import PublicationsByCategory from './components/PublicationsByCategory.vue';
+import ExploreByCategories from './components/ExploreByCategories.vue';
+import AdminInterface from './components/Admin/AdminInterface.vue'; 
+import AllUsers from './components/Admin/AllUsers.vue';
 
 // Rutas
 const routes = [
@@ -30,6 +33,10 @@ const routes = [
   { path: '/edit-publication/:id', component: EditPublication },
   { path: '/explore', component: Explore },
   { path: '/publication/:id', name: 'PublicationDetail', component: PublicationDetail },
+  { path: '/exploreByCategories', component: ExploreByCategories },
+  { path: '/admin-interface', component: AdminInterface },
+  { path: '/allUsers', component: AllUsers },
+
   {
     path: '/profile/:alias', 
     name: 'UserProfile',

@@ -79,20 +79,25 @@ export default {
         });
 
         const token = response.data;
+        Cookies.set('token', token, { expires: this.rememberPassword ? 7 : null });
 
-        Cookies.set('token', token, { expires: this.rememberPassword ? 7 : null }); 
-
-        
         if (this.rememberPassword) {
           localStorage.setItem('email', this.email);
           localStorage.setItem('password', this.password);
         } else {
-         
           localStorage.removeItem('email');
           localStorage.removeItem('password');
         }
 
-        this.$router.push('/profile');
+        const role = await this.getUserRole(token);
+
+        if (role.toLowerCase() === 'user') {
+          this.$router.push('/profile');
+        } else if (role.toLowerCase() === 'admin') {
+          this.$router.push('/admin-interface');
+        } else {
+          this.$router.push('/profile');
+        }
       } catch (error) {
         if (error.response && error.response.status === 403) {
           this.showCredentialsErrorAlert();
@@ -101,6 +106,19 @@ export default {
         }
       }
     },
+    async getUserRole(token) {
+  try {
+    const response = await axios.get('http://localhost:8080/api/profile/me', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data.role;
+  } catch (error) {
+    console.error('Error fetching user role:', error);
+    return null;
+  }
+},
     showCredentialsErrorAlert() {
       Swal.fire({
         icon: 'error',
