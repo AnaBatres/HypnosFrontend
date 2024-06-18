@@ -2,7 +2,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://proyectohypnos-production.up.railway.app/api',
+  baseURL: 'https://proyectohypnos-production.up.railway.app/api',
 });
 
 //http://localhost:8080
