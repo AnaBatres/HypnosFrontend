@@ -43,9 +43,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axiosInstance from '../axiosConfig';
 import Navbar from './Navbar.vue';
-import Cookies from 'js-cookie';
 
 export default {
   components: {
@@ -94,15 +93,12 @@ export default {
       try {
         const token = Cookies.get('token');
         if (token) {
-          const categoriesResponse = await axios.get(`http://localhost:8080/api/categories`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const categoriesResponse = await axiosInstance.get(`/categories`);
           const categories = categoriesResponse.data;
           const dreams = [];
           for (const category of categories) {
-            const publicationsResponse = await axios.get(`http://localhost:8080/api/publications/categories`, {
-              params: { categoryIds: [category.id] },
-              headers: { 'Authorization': `Bearer ${token}` }
+            const publicationsResponse = await axiosInstance.get(`/publications/categories`, {
+              params: { categoryIds: [category.id] }
             });
             const publications = publicationsResponse.data;
             dreams.push(...publications);
@@ -119,9 +115,7 @@ export default {
       try {
         const token = Cookies.get('token');
         if (token) {
-          const response = await axios.get(`http://localhost:8080/api/categories/${this.categoryId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const response = await axiosInstance.get(`/categories/${this.categoryId}`);
           this.categoryName = response.data.name;
           console.log(this.categoryName);
         }

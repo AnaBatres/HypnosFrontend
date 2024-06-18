@@ -65,7 +65,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axiosInstance from '../axiosConfig';
 import Swal from 'sweetalert2';
 
 export default {
@@ -87,7 +87,7 @@ export default {
         if (!this.isValidEmail(this.email)) {
           throw new Error('Formato de correo electrónico incorrecto');
         }
-        await axios.post('http://localhost:8080/api/auth/signup', {
+        await axiosInstance.post('/auth/signup', {
           email: this.email,
           firstname: this.firstname,
           lastname: this.lastname,

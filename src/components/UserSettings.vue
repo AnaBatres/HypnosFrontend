@@ -35,9 +35,9 @@
 
 <script>
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import Navbar from './Navbar.vue';
 import Swal from 'sweetalert2';
+import axiosInstance from '../axiosConfig';
 
 export default {
   name: 'UserSettings',
@@ -58,16 +58,7 @@ export default {
   },
   async created() {
     try {
-      const token = Cookies.get('token');
-      if (!token) {
-        console.error('No se encontró el token en la cookie.');
-        return;
-      }
-
-      const response = await axios.get('http://localhost:8080/api/profile/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
+      const response = await axiosInstance.get('/profile/me');
       this.user = response.data;
     } catch (error) {
       console.error('Error al obtener el perfil del usuario:', error);
@@ -101,25 +92,13 @@ export default {
     },
     async updateProfile() {
       try {
-        const token = Cookies.get('token');
-        if (!token) {
-          throw new Error('No se encontró el token en la cookie.');
-        }
-
         const userUpdateData = {
           email: this.user.email,
           firstname: this.user.firstname,
           lastname: this.user.lastname,
           alias: this.user.alias
         };
-
-        const response = await axios.patch(`http://localhost:8080/api/users/${this.user.alias}`, userUpdateData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
+        const response = await axiosInstance.patch(`/users/${this.user.alias}`, userUpdateData );
         if (response.status === 200) {
           Swal.fire('Éxito', 'Perfil actualizado con éxito', 'success');
           this.editMode = false;

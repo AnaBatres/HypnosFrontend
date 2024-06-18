@@ -9,24 +9,30 @@
         <div v-else>
           <h1 class="publication-title text-dark">{{ publication.title }}</h1>
           <p>{{ publication.text }}</p>
-          <div>
-            <span v-for="(category, index) in publication.categories" :key="index" class="badge bg-secondary me-1">{{ category.name }}</span>
-          </div>
-          <div v-if="!isOwner">
-            <div class="mt-4">
-              <textarea class="form-control" rows="3" v-model="newComment"></textarea>
-              <button class="btn btn-primary mt-2" @click="commentOnPublication">Comentar</button>
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <span v-for="(category, index) in publication.categories" :key="index" class="badge bg-secondary me-1">{{ category.name }}</span>
             </div>
-            <div class="mt-3 d-flex justify-content-end">
-              <button @click="likePublication" class="btn btn-link text-danger p-0">
-                <i class="fa fa-heart-o"></i>
+            <div class="d-flex align-items-center">
+              <button @click="likePublication" class="btn btn-link text-danger p-0 me-2">
+                <i :class="isLiked ? 'bi bi-heart-fill text-danger' : 'bi bi-heart'" class="heart-icon"></i>
               </button>
+              <span>{{ likesCount }}</span>
             </div>
+          </div>
+          <div class="mt-4">
+            <textarea class="form-control" rows="3" v-model="newComment" placeholder="Escribe un comentario..."></textarea>
+            <button class="btn btn-primary mt-2" @click="commentOnPublication">Comentar</button>
           </div>
           <div class="comments mt-4">
-            <div v-for="(comment, index) in visibleComments" :key="index" class="comment mb-2">
-              <p><strong>{{ comment.user.alias }}</strong></p>
-              <p>{{ comment.text }}</p>
+            <div v-for="(comment, index) in visibleComments" :key="index" class="comment mb-2 d-flex justify-content-between align-items-start">
+              <div>
+                <p><strong>{{ comment.user.alias }}</strong></p>
+                <p>{{ comment.text }}</p>
+              </div>
+              <button v-if="comment.user.id === currentUser.id" @click="confirmDeleteComment(comment.id)" class="btn btn-link p-0 text-danger">
+                <i class="bi bi-trash-fill"></i>
+              </button>
             </div>
             <div class="d-flex justify-content-between">
               <button v-if="visibleComments.length < filteredComments.length" @click="loadMoreComments" class="btn btn-link">Ver más</button>
@@ -38,10 +44,11 @@
     </div>
   </div>
 </template>
+
 <script>
-import axios from 'axios';
+import axiosInstance from '../axiosConfig';
 import Navbar from './Navbar.vue';
-import Cookies from 'js-cookie';
+import Swal from 'sweetalert2';
 
 export default {
   name: 'PublicationDetail',
@@ -54,24 +61,25 @@ export default {
       currentUser: null,
       isOwner: false,
       isLiked: false,
+      likesCount: 0,
       newComment: '',
       loading: true,
       publicationComments: [],
-      visibleComments: [] 
+      visibleComments: []
     };
   },
   async created() {
     try {
-      const token = Cookies.get('token');
       const postId = this.$route.params.id;
-      const publicationResponse = await axios.get(`http://localhost:8080/api/publications/id/${postId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const publicationResponse = await axiosInstance.get(`/publications/id/${postId}`);
       this.publication = publicationResponse.data;
       await this.fetchCurrentUser();
       this.isOwner = this.publication.user.id === this.currentUser.id;
+
+      const userLikesResponse = await axiosInstance.get(`/publications/liked/${this.currentUser.id}`);
+      this.isLiked = userLikesResponse.data.some(pub => pub.id === this.publication.id);
+
+      await this.updateLikesCount();
       await this.getPublicationComments();
     } catch (error) {
       console.error('Error al obtener los datos:', error);
@@ -87,74 +95,100 @@ export default {
   methods: {
     async getPublicationComments() {
       try {
-        const response = await axios.get(`http://localhost:8080/api/comments`, {
-          headers: {
-            Authorization: `Bearer ${Cookies.get('token')}`
-          }
-        });
+        const response = await axiosInstance.get(`/comments`);
         this.publicationComments = response.data;
-        this.visibleComments = this.filteredComments.slice(0, 3);
+        this.visibleComments = this.filteredComments.slice(0, 2);
       } catch (error) {
         console.error('Error al obtener los comentarios de la publicación:', error);
       }
     },
     async fetchCurrentUser() {
       try {
-        const userResponse = await axios.get('http://localhost:8080/api/profile/me', {
-          headers: {
-            Authorization: `Bearer ${Cookies.get('token')}`
-          }
-        });
+        const userResponse = await axiosInstance.get('/profile/me');
         this.currentUser = userResponse.data;
       } catch (error) {
         console.error('Error al obtener el usuario actual:', error);
       }
     },
-    likePublication() {
-      if (!this.isOwner) {
-        axios.post(`http://localhost:8080/api/publications/${this.publication.id}/like`, {}, {
-          headers: {
-            Authorization: `Bearer ${Cookies.get('token')}`
-          }
-        })
-          .then(response => {
-            this.isLiked = !this.isLiked;
-            console.log('Publicación likeada');
-          })
-          .catch(error => {
-            console.error('Error al dar "me gusta" a la publicación:', error);
-          });
+    async likePublication() {
+      const likeData = {
+        userId: this.currentUser.id,
+        like: !this.isLiked
+      };
+      try {
+        await axiosInstance.patch(`/publications/${this.publication.id}/like`, likeData);
+        this.isLiked = !this.isLiked;
+        await this.updateLikesCount();
+        console.log('Publicación likeada');
+      } catch (error) {
+        console.error('Error al dar "me gusta" a la publicación:', error);
+        if (error.response && error.response.status === 403) {
+          console.error('Acceso prohibido: asegúrate de que tienes permisos para acceder a esta información.');
+        }
       }
     },
-    commentOnPublication() {
-      if (!this.isOwner && this.newComment.trim()) {
-        axios.post(`http://localhost:8080/api/comments/create`, {
-          text: this.newComment,
-          userId: this.currentUser.id,
-          publicationId: this.publication.id
-        }, {
-          headers: {
-            Authorization: `Bearer ${Cookies.get('token')}`
-          }
-        })
-        .then(response => {
-          this.publicationComments.unshift(response.data); 
+    async updateLikesCount() {
+      try {
+        const likesCountResponse = await axiosInstance.get(`/publications/${this.publication.id}/likes`);
+        if (typeof likesCountResponse.data === 'number') {
+          this.likesCount = likesCountResponse.data;
+        } else if (Array.isArray(likesCountResponse.data)) {
+          this.likesCount = likesCountResponse.data.length;
+        } else {
+          console.error('Invalid response format for likes:', likesCountResponse.data);
+        }
+      } catch (error) {
+        console.error('Error al actualizar el conteo de likes:', error);
+      }
+    },
+    async commentOnPublication() {
+      if (this.newComment.trim()) {
+        try {
+          const response = await axiosInstance.post(`/comments/create`, {
+            text: this.newComment,
+            userId: this.currentUser.id,
+            publicationId: this.publication.id
+          });
+          this.publicationComments.unshift(response.data);
           this.visibleComments = this.filteredComments.slice(0, this.visibleComments.length + 1);
           this.newComment = '';
-        })
-        .catch(error => {
+        } catch (error) {
           console.error('Error al comentar en la publicación:', error);
-        });
+        }
+      }
+    },
+    confirmDeleteComment(commentId) {
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: "No podrás revertir esto",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, eliminarlo'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          this.deleteComment(commentId);
+        }
+      });
+    },
+    async deleteComment(commentId) {
+      try {
+        await axiosInstance.delete(`/comments/${commentId}`);
+        this.publicationComments = this.publicationComments.filter(comment => comment.id !== commentId);
+        this.visibleComments = this.filteredComments.slice(0, this.visibleComments.length);
+      } catch (error) {
+        console.error('Error al eliminar el comentario:', error);
       }
     },
     loadMoreComments() {
       const currentLength = this.visibleComments.length;
-      const moreComments = this.filteredComments.slice(currentLength, currentLength + 3);
+      const moreComments = this.filteredComments.slice(currentLength, currentLength + 2);
       this.visibleComments = this.visibleComments.concat(moreComments);
     },
     showLessComments() {
-      if (this.visibleComments.length > 3) {
-        this.visibleComments = this.visibleComments.slice(0, this.visibleComments.length - 3);
+      if (this.visibleComments.length > 2) {
+        this.visibleComments = this.visibleComments.slice(0, this.visibleComments.length - 2);
       }
     }
   }
@@ -182,8 +216,6 @@ export default {
   margin-top: 1.5rem;
 }
 
-
-
 .publication-title {
   font-size: 2.5rem;
   color: black;
@@ -203,7 +235,7 @@ export default {
 }
 
 .comment {
-  background-color: #c2c8ce;
+  background-color: #e4e5e7;
   padding: 1rem;
   border-radius: 4px;
 }
@@ -214,7 +246,10 @@ export default {
 
 .heart-icon {
   font-size: 1.5rem;
-  color: red;
   cursor: pointer;
+}
+
+.ms-2 {
+  margin-left: 0.5rem;
 }
 </style>

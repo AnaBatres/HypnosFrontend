@@ -6,13 +6,13 @@
         <div class="col-md-8">
           <div class="card shadow-sm">
             <div class="card-body text-center">
-              <img id="avatarPreview" src="../imagenes/images2.jpg" alt="Profile Picture"
+              <img id="avatarPreview" src="../assets/gato.jpg" alt="Profile Picture"
                 class="rounded-circle mb-3 border" style="border-width: 2px; width: 150px; height: 150px;">
               <h1 class="profile-name">{{ user.firstname }} {{ user.lastname }}</h1>
               <p class="profile-alias">{{ user.alias }}</p>
               <div class="d-flex justify-content-center mt-3">
                 <button :class="isFollowing ? 'btn btn-secondary btn-sm me-2' : 'btn btn-primary btn-sm me-2'"
-                        @click="followOrUnfollow(user.id)">
+                  @click="followOrUnfollow(user.id)">
                   <i :class="isFollowing ? 'bi bi-person-check-fill' : 'bi bi-person-plus-fill'"></i>
                   {{ isFollowing ? 'Siguiendo' : 'Seguir' }}
                 </button>
@@ -39,8 +39,10 @@
                   <router-link :to="'/publication/' + post.id" class="text-decoration-none">
                     <div class="card-header text-center">
                       <h5 class="card-title">{{ post.title }}</h5>
-                      <p class="card-text"><small class="text-muted"><i class="bi bi-heart text-danger"></i> {{
-                        post.likesCount }}</small></p>
+                      <small class="text-muted">
+                        <i class="bi bi-heart-fill text-danger"></i> {{ post.likesCount }}
+                        <i class="bi bi-chat ms-3"></i> {{ post.commentsCount }}
+                      </small>
                     </div>
                   </router-link>
                 </div>
@@ -55,8 +57,8 @@
 
 <script>
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import Navbar from './Navbar.vue';
+import axiosInstance from '../axiosConfig';
 
 export default {
   name: 'UserProfile',
@@ -80,106 +82,59 @@ export default {
   async created() {
     try {
       const alias = this.$route.params.alias;
-      const token = Cookies.get('token');
-      if (token) {
-        const userResponse = await axios.get(`http://localhost:8080/api/users/${alias}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        this.user = userResponse.data;
+      const userResponse = await axiosInstance.get(`/users/${alias}`);
+      this.user = userResponse.data;
 
-       
-        await this.getCurrentUser();
-        await this.getFollowData();
-        await this.getCurrentUserFollowings();
+      await this.getCurrentUser();
+      await this.getFollowData();
+      await this.getCurrentUserFollowings();
 
-        this.isFollowing = this.currentFollowings.some(following => following.followed.id === this.user.id);
+      this.isFollowing = this.currentFollowings.some(following => following.followed.id === this.user.id);
 
-        const publicationsResponse = await axios.get(`http://localhost:8080/api/publications/user/${this.user.alias}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        this.publications = publicationsResponse.data;
-      } else {
-        console.error('No se encontró el token en la cookie.');
-      }
+      const publicationsResponse = await axiosInstance.get(`/publications/user/${this.user.alias}`);
+      this.publications = publicationsResponse.data;
     } catch (error) {
       console.error('Error al cargar el perfil del usuario:', error);
+    }
+
+    for (let i = 0; i < this.publications.length; i++) {
+      const postId = this.publications[i].id;
+      const likesCountResponse = await axiosInstance.get(`/publications/${postId}/likes`);
+      this.publications[i].likesCount = likesCountResponse.data;
+
+      const commentsCountResponse = await axiosInstance.get(`/comments/publication/${postId}/count`);
+      this.publications[i].commentsCount = commentsCountResponse.data;
     }
   },
 
   methods: {
     async getFollowData() {
       try {
-        const token = Cookies.get('token');
-        if (token) {
-       
-          const followingResponse = await axios.get(`http://localhost:8080/api/follow/following/${this.user.id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+        const followingResponse = await axiosInstance.get(`/follow/following/${this.user.id}`);
+        const followersResponse = await axiosInstance.get(`/follow/followers/${this.user.id}`);
 
-          const followersResponse = await axios.get(`http://localhost:8080/api/follow/followers/${this.user.id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-
-          this.followings = followingResponse.data;
-          this.followers = followersResponse.data;
-          this.followingCount = this.followings.length;
-          this.followersCount = this.followers.length;
-        } else {
-          console.error('No se encontró el token en la cookie.');
-        }
+        this.followings = followingResponse.data;
+        this.followers = followersResponse.data;
+        this.followingCount = this.followings.length;
+        this.followersCount = this.followers.length;
       } catch (error) {
         console.error('Error al obtener los datos de seguidores y seguidos:', error);
       }
     },
     async getCurrentUserFollowings() {
       try {
-        const token = Cookies.get('token');
-        if (token) {
-          const currentFollowingResponse = await axios.get(`http://localhost:8080/api/follow/following/${this.currentUser.id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          this.currentFollowings = currentFollowingResponse.data;
-        } else {
-          console.error('No se encontró el token en la cookie.');
-        }
+        const currentFollowingResponse = await axiosInstance.get(`/follow/following/${this.currentUser.id}`);
+        this.currentFollowings = currentFollowingResponse.data;
       } catch (error) {
         console.error('Error al obtener los datos de seguidos del usuario actual:', error);
       }
     },
     async followOrUnfollow(userId) {
       try {
-        const token = Cookies.get('token');
         if (this.isFollowing) {
-         
-          await axios.delete(`http://localhost:8080/api/follow/${this.currentUser.id}/${userId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+          await axiosInstance.delete(`/follow/${this.currentUser.id}/${userId}`);
         } else {
-         
-          await axios.post(`http://localhost:8080/api/follow/${this.currentUser.id}/${userId}`, {}, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+          await axiosInstance.post(`/follow/${this.currentUser.id}/${userId}`);
         }
         this.isFollowing = !this.isFollowing;
         await this.getFollowData();
@@ -190,18 +145,8 @@ export default {
     },
     async getCurrentUser() {
       try {
-        const token = Cookies.get('token');
-        if (token) {
-          const response = await axios.get('http://localhost:8080/api/profile/me', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          this.currentUser = response.data;
-        } else {
-          console.error('No se encontró el token en la cookie.');
-        }
+        const response = await axiosInstance.get('/profile/me');
+        this.currentUser = response.data;
       } catch (error) {
         console.error('Error al obtener el usuario actual:', error);
       }
@@ -218,6 +163,11 @@ export default {
 </script>
 
 <style>
+img.rounded-circle {
+  border: 2px solid #ddd;
+  padding: 5px;
+}
+
 .profile-avatar {
   width: 150px;
   height: 150px;

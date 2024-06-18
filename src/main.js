@@ -15,14 +15,16 @@ import Profile from './components/Profile.vue';
 import CreatePublication from './components/CreatePublication.vue'; 
 import UserSettings from './components/UserSettings.vue';
 import ExploreFriends from './components/ExploreFriends.vue';
-import EditPublication from './components/EditPublication.vue';
 import Explore from './components/Explore.vue';
 import PublicationDetail from './components/PublicationDetail.vue';
 import UserProfile from './components/UserProfile.vue';
 import PublicationsByCategory from './components/PublicationsByCategory.vue';
 import ExploreByCategories from './components/ExploreByCategories.vue';
-import AdminInterface from './components/Admin/AdminInterface.vue'; 
 import AllUsers from './components/Admin/AllUsers.vue';
+import AllPublications from './components/Admin/AllPublications.vue';
+import AllCategories from './components/Admin/AllCategories.vue';
+import Favorites from './components/Favorites.vue';
+import EditCategory from './components/Admin/EditCategory.vue';
 
 // Rutas
 const routes = [
@@ -30,13 +32,18 @@ const routes = [
   { path: '/login', component: Login },
   { path: '/settings', component: UserSettings},
   { path: '/exploreFriends', component: ExploreFriends},
-  { path: '/edit-publication/:id', component: EditPublication },
   { path: '/explore', component: Explore },
   { path: '/publication/:id', name: 'PublicationDetail', component: PublicationDetail },
   { path: '/exploreByCategories', component: ExploreByCategories },
-  { path: '/admin-interface', component: AdminInterface },
   { path: '/allUsers', component: AllUsers },
-
+  { path: '/allPublications', component: AllPublications },
+  { path: '/allCategories', component: AllCategories },
+  { path: '/favorites', component: Favorites },
+  {
+    path: '/edit-category/:id ', 
+    name: 'editCategory',
+    component: EditCategory
+  },
   {
     path: '/profile/:alias', 
     name: 'UserProfile',
@@ -79,7 +86,6 @@ router.beforeEach((to, from, next) => {
 });
 
 library.add(faGhost);
-
 
 const app = createApp(App);
 app.use(router);

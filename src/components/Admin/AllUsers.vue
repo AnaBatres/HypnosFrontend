@@ -1,19 +1,15 @@
 <template>
   <div>
     <admin-navbar />
-    <div class="container-fluid vh-100 d-flex flex-column px-5">
+    <div class="container-fluid d-flex flex-column px-5">
       <div class="row flex-grow-1 overflow-auto">
         <div class="col-12">
           <div class="input-group my-3">
-            <span class="input-group-text" id="search-addon">
-              <svg class="bi bi-search" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                viewBox="0 0 16 16">
-                <path fill-rule="evenodd"
-                  d="M10.442 10.442a1 1 0 0 1-1.415 0l-.85-.85a5 5 0 1 1 1.415-1.415l.85.85a1 1 0 0 1 0 1.415zm-2.83-6.902a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
-              </svg>
-            </span>
             <input type="text" class="form-control" placeholder="Search user" aria-label="Search"
               aria-describedby="search-addon" v-model="search" />
+            <button class="btn btn-danger" @click="deleteSelectedUsers">
+              Eliminar
+            </button>
           </div>
           <div class="table-responsive">
             <table class="table table-hover">
@@ -30,8 +26,8 @@
                 <tr v-for="user in filteredUsers" :key="user.alias">
                   <td>
                     <div class="form-check">
-                      <input class="form-check-input" type="checkbox" :id="'checkbox-' + user.alias" v-model="selectedUsers"
-                        :value="user.alias">
+                      <input class="form-check-input" type="checkbox" :id="'checkbox-' + user.alias"
+                        v-model="selectedUsers" :value="user.alias">
                       <label class="form-check-label ms-2" :for="'checkbox-' + user.alias"></label>
                     </div>
                   </td>
@@ -45,21 +41,13 @@
           </div>
         </div>
       </div>
-      <div class="row">
-        <div class="col-12 text-end mt-3">
-          <button class="btn btn-danger" @click="deleteSelectedUsers">
-            Delete Selected Users
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
-import Cookies from 'js-cookie';
 import AdminNavbar from './AdminNavbar.vue';
+import axiosInstance from '../../axiosConfig';
 
 export default {
   components: {
@@ -83,44 +71,21 @@ export default {
     }
   },
   methods: {
-    fetchUsers() {
-      const token = Cookies.get('token');
-      axios.get('http://localhost:8080/api/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-        .then(response => {
-          this.users = response.data;
-        })
-        .catch(error => {
-          console.error('There was an error fetching the users!', error);
-        });
+    async fetchUsers() {
+      const response = await axiosInstance.get('/users');
+      this.users = response.data;
     },
     deleteSelectedUsers() {
-      const token = Cookies.get('token');
-      const confirmDelete = confirm('Are you sure you want to delete the selected users?');
-      if (confirmDelete) {
-        const promises = this.selectedUsers.map(alias =>
-          axios.delete(`http://localhost:8080/api/users/${alias}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          })
-        );
+      const deletePromises = this.selectedUsers.map(alias => {
+        return axiosInstance.delete(`/users/delete/${alias}`);
+      });
 
-        Promise.all(promises)
-          .then(() => {
-            this.fetchUsers();
-            this.selectedUsers = [];
-            alert('Selected users deleted successfully.');
-          })
-          .catch(error => {
-            console.error('There was an error deleting the users!', error);
-          });
-      }
+      Promise.all(deletePromises)
+        .then(() => {
+          this.fetchUsers();
+          this.selectedUsers = [];
+          alert('Selected users deleted successfully.');
+        })
     }
   },
   mounted() {
@@ -141,5 +106,12 @@ export default {
 
 .overflow-auto {
   overflow: auto;
+}
+
+.form-check-input {
+  width: 18px;
+  height: 18px;
+  border-width: 3px;
+  border-color: rgb(60, 60, 60);
 }
 </style>

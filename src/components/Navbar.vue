@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-      <router-link to="/" class="navbar-brand text-light">HYPNOS</router-link>
+      <router-link to="/explore" class="navbar-brand text-light">HYPNOS</router-link>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
         aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -19,26 +19,19 @@
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/create-publication" class="nav-link text-light">
-              <i class="bi bi-pencil-square icon"></i>
+            <router-link to="/exploreByCategories" class="nav-link text-light">
+              <i class="bi bi-robot icon"></i>
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/exploreByCategories" class="nav-link text-light">
+            <router-link to="/favorites" class="nav-link text-light">
               <i class="bi bi-heart-fill icon"></i>
             </router-link>
           </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button"
-              data-bs-toggle="dropdown" aria-expanded="false">
-              Categorias
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <li v-for="category in dreamCategories" :key="category.id">
-                <router-link :to="'/publications/' + category.id" class="dropdown-item no-underline">{{ category.name
-                  }}</router-link>
-              </li>
-            </ul>
+          <li class="nav-item">
+            <router-link to="/create-publication" class="nav-link text-light">
+              <i class="bi bi-pencil-square icon"></i>
+            </router-link>
           </li>
         </ul>
 
@@ -76,9 +69,9 @@
 </template>
 
 <script>
-import axios from 'axios';
-import Cookies from 'js-cookie';
+import axiosInstance from '../axiosConfig';
 import Swal from 'sweetalert2';
+import Cookies from 'js-cookie';
 
 export default {
   name: 'Navbar',
@@ -98,34 +91,16 @@ export default {
   methods: {
     async fetchDreamCategories() {
       try {
-        const token = Cookies.get('token');
-        if (token) {
-          const response = await axios.get('http://localhost:8080/api/categories', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          const response = await axiosInstance.get('/categories');
           this.dreamCategories = response.data;
-        } else {
-          console.error('No se encontró el token en la cookie.');
-        }
       } catch (error) {
         console.error('Error al obtener las categorías de sueños:', error);
       }
     },
     async fetchUserData() {
       try {
-        const token = Cookies.get('token');
-        if (token) {
-          const response = await axios.get('http://localhost:8080/api/profile/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          const response = await axiosInstance.get('/profile/me');
           this.user.firstname = response.data.firstname;
-        } else {
-          console.error('No se encontró el token en la cookie.');
-        }
       } catch (error) {
         console.error('Error al obtener los datos del usuario:', error);
         if (error.response && error.response.status === 401) {
@@ -135,22 +110,13 @@ export default {
     },
     async searchUserByAlias() {
       try {
-        const token = Cookies.get('token');
-        if (token) {
-          const response = await axios.get(`http://localhost:8080/api/users/${this.user.search}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          const response = await axiosInstance.get(`/users/@${this.user.search}`);
           const userData = response.data;
           if (userData.id) {
             this.$router.push(`/profile/${userData.alias}`);
           } else {
             alert('Usuario no encontrado.');
           }
-        } else {
-          console.error('No se encontró el token en la cookie.');
-        }
       } catch (error) {
         console.error('Error al buscar el usuario por alias:', error);
         alert('Error al buscar el usuario por alias. Por favor, inténtalo de nuevo más tarde.');
@@ -178,12 +144,8 @@ export default {
     async logout() {
       try {
         const token = Cookies.get('token');
-
         if (token) {
-        
           Cookies.remove('token');
-
-        
           this.$router.push('/login');
         } else {
           console.error('No se encontró el token en la cookie.');

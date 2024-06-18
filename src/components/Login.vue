@@ -48,9 +48,9 @@
 </template>
 
 <script>
-import axios from 'axios';
 import Swal from 'sweetalert2';
 import Cookies from 'js-cookie';
+import axiosInstance from '../axiosConfig';
 
 export default {
   name: 'Login',
@@ -73,7 +73,7 @@ export default {
   methods: {
     async login() {
       try {
-        const response = await axios.post('http://localhost:8080/api/auth/login', {
+        const response = await axiosInstance.post('/auth/login', {
           email: this.email,
           password: this.password
         });
@@ -94,7 +94,7 @@ export default {
         if (role.toLowerCase() === 'user') {
           this.$router.push('/profile');
         } else if (role.toLowerCase() === 'admin') {
-          this.$router.push('/admin-interface');
+          this.$router.push('/allPublications');
         } else {
           this.$router.push('/profile');
         }
@@ -108,7 +108,7 @@ export default {
     },
     async getUserRole(token) {
   try {
-    const response = await axios.get('http://localhost:8080/api/profile/me', {
+    const response = await axiosInstance.get('/profile/me', {
       headers: {
         Authorization: `Bearer ${token}`
       }

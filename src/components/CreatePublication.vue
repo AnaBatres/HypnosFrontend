@@ -4,9 +4,11 @@
     <div class="container mt-4">
       <div class="row justify-content-center">
         <div class="col-lg-8">
+          <div class="p-3 mb-4">
+            <h2 class="text-center text-white mb-0">COMPARTE TU SUEÑO</h2>
+          </div>
           <div class="card">
             <div class="card-body">
-              <h2 class="card-title">Comparte tu sueño</h2>
               <form @submit.prevent="createPost" class="form">
                 <div class="mb-3">
                   <label for="title" class="form-label">¿Qué has soñado?</label>
@@ -34,7 +36,7 @@
                     </span>
                   </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Compartir sueño</button>
+                <button type="submit" class="btn">Compartir sueño</button>
               </form>
               <div v-if="message" class="mt-3 alert alert-success">{{ message }}</div>
             </div>
@@ -46,8 +48,8 @@
 </template>
 
 <script>
-import axios from 'axios';
-import Cookies from 'js-cookie';
+
+import axiosInstance from '../axiosConfig'; 
 import Swal from 'sweetalert2';
 import Navbar from './Navbar.vue';
 
@@ -80,29 +82,19 @@ export default {
   },
   methods: {
     async fetchCategories() {
-      const token = Cookies.get('token');
       try {
-        const response = await axios.get('http://localhost:8080/api/categories', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = await axiosInstance.get('/categories');
         this.categories = response.data;
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error(error);
       }
     },
     async fetchUserId() {
-      const token = Cookies.get('token');
       try {
-        const response = await axios.get('http://localhost:8080/api/profile/me', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = await axiosInstance.get('/profile/me');
         this.form.userId = response.data.id;
       } catch (error) {
-        console.error('Error fetching user ID:', error);
+        console.error(error);
       }
     },
     addCategory() {
@@ -119,20 +111,13 @@ export default {
       return category ? category.name : 'Unknown';
     },
     async createPost() {
-      const token = Cookies.get('token');
-      try {
-        const response = await axios.post(
-          'http://localhost:8080/api/publications/create',
+        const response = await axiosInstance.post(
+          '/publications/create',
           {
             title: this.form.title,
             text: this.form.text,
             categoryIds: this.form.categoryIds,
             userId: this.form.userId
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
           }
         );
         
@@ -152,17 +137,22 @@ export default {
             this.form.categoryIds = [];
           }
         });
-        
-      } catch (error) {
-        console.error('Error creating post:', error);
-        this.message = 'Failed to create post.';
-      }
     }
   }
 };
+
 </script>
 
 <style scoped>
+.p-3, .btn{
+  background-color: #2f7954;
+  color: white;
+}
+
+.btn:hover{
+  background-color: #4cc488;
+}
+
 .dream-post {
   max-width: 600px;
   margin: 0 auto;

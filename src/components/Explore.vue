@@ -2,7 +2,7 @@
   <div>
     <Navbar />
     <div class="container mt-4">
-      <div class="bg-dark p-3 mb-4">
+      <div class="p-3 mb-4">
         <h2 class="text-center text-white mb-0">Explora los sueños de los usuarios de HYPNOS</h2>
       </div>
       <div v-if="loading" class="text-center">Cargando...</div>
@@ -12,14 +12,14 @@
             class="col-md-6 mb-4">
             <div class="card h-100" @click="viewPublication(publication.id)">
               <div class="card-body">
-                <p class="card-text" v-if="publication.user">
+                <div class="d-flex justify-content-between align-items-center">
                   <span class="alias-header bg-blue text-white">{{ publication.user.alias }}</span>
-                </p>
-                <h5 class="card-title text-dark">{{ publication.title }}</h5>
-                <div class="d-flex align-items-center">
-                  <span class="text-muted me-2">{{ publication.likesCount }}</span> 
-                  <i class="bi bi-heart-fill text-danger"></i>
+                  <div class="d-flex align-items-center">
+                    <span class="text-muted me-2">{{ publication.likesCount }}</span> 
+                    <i class="bi bi-heart-fill text-danger"></i>
+                  </div>
                 </div>
+                <h5 class="card-title text-dark mt-2">{{ publication.title }}</h5>
               </div>
             </div>
           </div>
@@ -42,11 +42,10 @@
   </div>
 </template>
 
-
 <script>
-import axios from 'axios';
 import Cookies from 'js-cookie';
 import Navbar from './Navbar.vue';
+import axiosInstance from '../axiosConfig';
 
 export default {
   components: {
@@ -65,63 +64,50 @@ export default {
     this.loading = true;
 
     try {
-        const token = Cookies.get('token');
-        const response = await axios.get('http://localhost:8080/api/publications/random', {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+      const response = await axiosInstance.get('/publications/random');
 
-        const userId = await this.fetchCurrentUserId();
-        console.log('Current user ID:', userId);
+      const userId = await this.fetchCurrentUserId();
+      console.log('Current user ID:', userId);
 
-        this.publications = response.data.map(item => {
-            console.log('Mapping item:', item);
-            const publicationUserId = item.userId || item[4];
-            return {
-                id: item.id || item[0],
-                title: item.title || item[3],
-                text: item.text || item[2],
-                userId: publicationUserId,
-                likesCount: 0 // Inicializar en 0
-            };
-        });
+      this.publications = response.data.map(item => {
+        console.log('Mapping item:', item);
+        const publicationUserId = item.userId || item[4];
+        return {
+          id: item.id || item[0],
+          title: item.title || item[3],
+          text: item.text || item[2],
+          userId: publicationUserId,
+          likesCount: 0 
+        };
+      });
 
-        console.log('Mapped publications:', this.publications);
+      this.publications = this.publications.filter(publication => publication.userId !== userId);
+      console.log('Filtered publications (excluding current user):', this.publications);
 
-        this.publications = this.publications.filter(publication => publication.userId !== userId);
-        console.log('Filtered publications (excluding current user):', this.publications);
+      await Promise.all(this.publications.map(async publication => {
+        const alias = await this.getUserAliasByPostId(publication.id);
+        if (alias) {
+          publication.user = { alias };
+        }
 
-        await Promise.all(this.publications.map(async publication => {
-            const alias = await this.getUserAliasByPostId(publication.id);
-            if (alias) {
-                publication.user = { alias };
-            }
-            // Obtener y asignar la cantidad de likes
-            publication.likesCount = await this.getLikesCount(publication.id); 
-        }));
+        publication.likesCount = await this.getLikesCount(publication.id); 
+      }));
 
-        console.log('Publications with user alias:', this.publications);
+      console.log('Publications with user alias:', this.publications);
 
-        this.paginatePublications();
+      this.paginatePublications();
 
-        this.loading = false;
+      this.loading = false;
     } catch (error) {
-        console.error('Error al obtener publicaciones aleatorias:', error);
-        this.loading = false;
+      console.error('Error al obtener publicaciones aleatorias:', error);
+      this.loading = false;
     }
-},
-
+  },
   methods: {
     async fetchCurrentUserId() {
       try {
-        const token = Cookies.get('token');
-        const response = await axios.get('http://localhost:8080/api/profile/me', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        console.log('Response from /api/profile/me:', response.data);
+        const response = await axiosInstance.get('/profile/me');
+        console.log('Response from /profile/me:', response.data);
         return response.data.id;
       } catch (error) {
         console.error('Error al obtener el ID de usuario actual:', error);
@@ -130,13 +116,8 @@ export default {
     },
     async getUserAliasByPostId(postId) {
       try {
-        const token = Cookies.get('token');
-        const response = await axios.get(`http://localhost:8080/api/publications/id/${postId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        console.log(`Response from /api/publications/id/${postId}:`, response.data);
+        const response = await axiosInstance.get(`/publications/id/${postId}`);
+        console.log(`Response from /publications/id/${postId}:`, response.data);
         const publication = response.data;
         return publication.user ? publication.user.alias : null;
       } catch (error) {
@@ -146,15 +127,9 @@ export default {
     },
     async getLikesCount(postId) {
       try {
-        const token = Cookies.get('token');
-        const response = await axios.get(`http://localhost:8080/api/publications/${postId}/likes`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        console.log("likes", response.data)
+        const response = await axiosInstance.get(`/publications/${postId}/likes`);
+        console.log("likes", response.data);
         return response.data;
-        
       } catch (error) {
         console.error('Error al obtener la cantidad de likes:', error);
         return 0;
@@ -196,6 +171,9 @@ export default {
 </script>
 
 <style scoped>
+.p-3{
+  background-color: #003b7a;
+}
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -214,5 +192,17 @@ export default {
   color: #fff;
   padding: 3px 6px;
   border-radius: 4px;
+}
+
+.me-2 {
+  margin-right: 0.5rem;
+}
+.card {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.card:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-5px);
 }
 </style>

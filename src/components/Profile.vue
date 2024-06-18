@@ -6,7 +6,7 @@
         <div class="col-md-4">
           <div class="card shadow-sm">
             <div class="card-body text-center">
-              <img id="avatarPreview" src="../imagenes/images2.jpg" alt="Profile Picture"
+              <img id="avatarPreview" src="../assets/perro.jpg" alt="Profile Picture"
                 class="rounded-circle mb-3 border" style="border-width: 2px; width: 150px; height: 150px;">
               <h5 class="card-title">{{ user?.firstname || 'Usuario' }}</h5>
               <p class="card-text">{{ user?.alias || 'Alias' }}</p>
@@ -53,14 +53,12 @@
                         <h5 class="card-title text-center text-dark">{{ post.title }}</h5>
                         <div class="d-flex justify-content-between align-items-center">
                           <div>
-                            <p class="mb-0">
-                              <i class="bi bi-heart-fill text-danger"></i> <span class="fw-bold fs-5 text-black">{{
-                                post.likesCount }}</span>
-                            </p>
+                            <small class="text-muted">
+                              <i class="bi bi-heart-fill text-danger"></i> {{ post.likesCount }}
+                              <i class="bi bi-chat ms-3"></i> {{ post.commentsCount }}
+                            </small>
                           </div>
                           <div>
-                            <button class="btn btn-outline-danger btn-sm me-2"><i class="bi bi-arrow-bar-up"></i>
-                              Compartir</button>
                             <button class="btn btn-danger btn-sm" @click="confirmDelete(post.id)"> Eliminar
                             </button>
                           </div>
@@ -71,19 +69,43 @@
                 </div>
               </div>
               <div v-if="activeTab === 'followers'">
-                <ul v-if="followers.length > 0">
-                  <li v-for="follower in followers" :key="follower.id">{{ follower.alias }}</li>
-                </ul>
+                <div v-if="followers.length > 0" class="row">
+                  <div v-for="follower in followers" :key="follower.id" class="col-md-6 mb-3">
+                    <div class="card shadow-sm">
+                      <div class="card-body d-flex align-items-center">
+                        <img src="../assets/perfil.jpg" alt="Follower Avatar" class="rounded-circle me-3"
+                          style="width: 50px; height: 50px;">
+                        <div>
+                          <router-link :to="'/profile/' + follower.alias" class="text-decoration-none">
+                            <h5 class="card-title mb-0">{{ follower.alias }}</h5>
+                          </router-link>
+                          <p class="text-muted mb-0">{{ follower.firstname }} {{ follower.lastname }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div v-else>
                   <p>No hay seguidores.</p>
                 </div>
               </div>
               <div v-if="activeTab === 'following'">
-                <ul v-if="followings.length > 0">
-                  <li v-for="following in followings" :key="following.id">
-                    <router-link :to="'/profile/' + following.alias">{{ following.alias }}</router-link>
-                  </li>
-                </ul>
+                <div v-if="followings.length > 0" class="row">
+                  <div v-for="following in followings" :key="following.id" class="col-md-6 mb-3">
+                    <div class="card shadow-sm">
+                      <div class="card-body d-flex align-items-center">
+                        <img src="../assets/perfil.jpg" alt="Following Avatar" class="rounded-circle me-3"
+                          style="width: 50px; height: 50px;">
+                        <div>
+                          <router-link :to="'/profile/' + following.alias" class="text-decoration-none">
+                            <h5 class="card-title mb-0">{{ following.alias }}</h5>
+                          </router-link>
+                          <p class="text-muted mb-0">{{ following.firstname }} {{ following.lastname }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div v-else>
                   <p>No hay seguidos.</p>
                 </div>
@@ -97,12 +119,12 @@
 </template>
 
 <script>
-import axios from 'axios';
 import Cookies from 'js-cookie';
 import { RouterLink } from 'vue-router';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import Navbar from './Navbar.vue';
 import Swal from 'sweetalert2';
+import axiosInstance from '../axiosConfig';
 
 export default {
   name: 'Profile',
@@ -131,54 +153,33 @@ export default {
   },
   async created() {
     try {
-      const token = Cookies.get('token');
-      if (token) {
-        const response = await axios.get('http://localhost:8080/api/profile/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        });
+      const response = await axiosInstance.get('/profile/me');
+      const userData = response.data;
+      console.log(userData);
 
-        const userData = response.data;
-        console.log(userData);
+      this.user = {
+        id: userData.id,
+        firstname: userData.firstname,
+        lastname: userData.lastname,
+        email: userData.email,
+        alias: userData.alias,
+        password: userData.password,
+      };
 
-        this.user = {
-          id: userData.id,
-          firstname: userData.firstname,
-          lastname: userData.lastname,
-          email: userData.email,
-          alias: userData.alias,
-          password: userData.password,
-        };
+      const publicationsResponse = await axiosInstance.get(`/publications/user/id/${this.user.id}`);
+      this.publications = publicationsResponse.data;
 
-        const publicationsResponse = await axios.get(`http://localhost:8080/api/publications/user/id/${this.user.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+      for (let i = 0; i < this.publications.length; i++) {
+        const postId = this.publications[i].id;
+        const likesCountResponse = await axiosInstance.get(`/publications/${postId}/likes`);
+        this.publications[i].likesCount = likesCountResponse.data;
 
-        this.publications = publicationsResponse.data;
-
-        for (let i = 0; i < this.publications.length; i++) {
-          const postId = this.publications[i].id;
-          const likesCountResponse = await axios.get(`http://localhost:8080/api/publications/${postId}/likes`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          this.publications[i].likesCount = likesCountResponse.data;
-          console.log(this.publications[i].likesCount);
-        }
-
-        this.getFollowData();
-        console.log(this.followers);
-      } else {
-        console.error('No se encontró el token en la cookie.');
-        this.$router.push('/login');
+        const commentsCountResponse = await axiosInstance.get(`/comments/publication/${postId}/count`);
+        this.publications[i].commentsCount = commentsCountResponse.data;
       }
+
+      this.getFollowData();
+      console.log(this.followers);
     } catch (error) {
       console.error('Error al obtener los datos del usuario:', error);
       if (error.response && error.response.status === 401) {
@@ -192,33 +193,17 @@ export default {
   methods: {
     async getFollowData() {
       try {
-        const token = Cookies.get('token');
-        if (token) {
-          const followersResponse = await axios.get(`http://localhost:8080/api/follow/followers/${this.user.id}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+        const followersResponse = await axiosInstance.get(`/follow/followers/${this.user.id}`);
+        const followingResponse = await axiosInstance.get(`/follow/following/${this.user.id}`);
 
-          const followingResponse = await axios.get(`http://localhost:8080/api/follow/following/${this.user.id}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+        this.followers = followersResponse.data.map(follow => follow.follower);
+        this.followings = followingResponse.data.map(follow => follow.followed);
 
-          this.followers = followersResponse.data.map(follow => follow.follower);
-          this.followings = followingResponse.data.map(follow => follow.followed);
+        console.log("Followers:", this.followers);
+        console.log("Following:", this.followings);
 
-          console.log("Followers:", this.followers);
-          console.log("Following:", this.followings);
-
-          this.followersCount = this.followers.length;
-          this.followingCount = this.followings.length;
-        } else {
-          console.error('No se encontró el token en la cookie.');
-        }
+        this.followersCount = this.followers.length;
+        this.followingCount = this.followings.length;
       } catch (error) {
         console.error('Error al obtener los datos de seguidores y seguidos:', error);
       }
@@ -239,26 +224,16 @@ export default {
     },
     async deletePost(postId) {
       try {
-        const token = Cookies.get('token');
-        if (token) {
-          await axios.delete(`http://localhost:8080/api/publications/${postId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
+        await axiosInstance.delete(`/publications/${postId}`);
+        this.publications = this.publications.filter(post => post.id !== postId);
 
-          this.publications = this.publications.filter(post => post.id !== postId);
-
-          Swal.fire({
-            icon: 'success',
-            title: 'Publicación eliminada',
-            text: 'La publicación se ha eliminado correctamente.'
-          }).then(() => {
-            this.$forceUpdate();
-          });
-        } else {
-          console.error('No se encontró el token en la cookie.');
-        }
+        Swal.fire({
+          icon: 'success',
+          title: 'Publicación eliminada',
+          text: 'La publicación se ha eliminado correctamente.'
+        }).then(() => {
+          this.$forceUpdate();
+        });
       } catch (error) {
         console.error('Error al eliminar la publicación:', error);
         Swal.fire({
