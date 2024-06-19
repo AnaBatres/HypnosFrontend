@@ -106,19 +106,15 @@ export default {
         }
       }
     },
-    async getUserRole(token) {
-  try {
-    const response = await axiosInstance.get('/profile/me', {
-      headers: {
-        Authorization: `Bearer ${token}`
+    async getUserRole() {
+      try {
+        const response = await axiosInstance.get('/profile/me');
+        return response.data.role;
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+        return null;
       }
-    });
-    return response.data.role;
-  } catch (error) {
-    console.error('Error fetching user role:', error);
-    return null;
-  }
-},
+    },
     showCredentialsErrorAlert() {
       Swal.fire({
         icon: 'error',
@@ -161,5 +157,4 @@ body {
   color: white !important;
   background-color: #3b5998;
 }
-
 </style>

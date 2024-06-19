@@ -6,8 +6,8 @@
         <div class="col-md-4">
           <div class="card shadow-sm">
             <div class="card-body text-center">
-              <img id="avatarPreview" src="../assets/perro.jpg" alt="Profile Picture"
-                class="rounded-circle mb-3 border" style="border-width: 2px; width: 150px; height: 150px;">
+              <img id="avatarPreview" src="../assets/perro.jpg" alt="Profile Picture" class="rounded-circle mb-3 border"
+                style="border-width: 2px; width: 150px; height: 150px;">
               <h5 class="card-title">{{ user?.firstname || 'Usuario' }}</h5>
               <p class="card-text">{{ user?.alias || 'Alias' }}</p>
               <div class="d-flex justify-content-around mt-4">
@@ -219,6 +219,7 @@ export default {
 
       if (result.isConfirmed) {
         this.deletePost(postId);
+        this.$router.push('/profile');
       }
     },
     async deletePost(postId) {
@@ -230,8 +231,6 @@ export default {
           icon: 'success',
           title: 'Publicación eliminada',
           text: 'La publicación se ha eliminado correctamente.'
-        }).then(() => {
-          this.$forceUpdate();
         });
       } catch (error) {
         console.error('Error al eliminar la publicación:', error);
