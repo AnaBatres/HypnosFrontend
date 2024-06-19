@@ -5,7 +5,7 @@
       <div class="row flex-grow-1 overflow-auto">
         <div class="col-12">
           <div class="input-group my-3">
-            <input type="text" class="form-control" placeholder="Search publication" aria-label="Search"
+            <input type="text" class="form-control" placeholder="Busca la publicacion" aria-label="Search"
               aria-describedby="search-addon" v-model="search" />
             <button class="btn btn-danger" @click="deleteSelectedPublications">
               Eliminar

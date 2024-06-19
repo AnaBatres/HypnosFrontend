@@ -25,6 +25,7 @@ import AllPublications from './components/Admin/AllPublications.vue';
 import AllCategories from './components/Admin/AllCategories.vue';
 import Favorites from './components/Favorites.vue';
 import EditCategory from './components/Admin/EditCategory.vue';
+import AddCategory from './components/Admin/AddCategory.vue';
 
 // Rutas
 const routes = [
@@ -39,6 +40,7 @@ const routes = [
   { path: '/allPublications', component: AllPublications },
   { path: '/allCategories', component: AllCategories },
   { path: '/favorites', component: Favorites },
+  { path: '/addCategory', component: AddCategory },
   {
     path: '/edit-category/:id ', 
     name: 'editCategory',

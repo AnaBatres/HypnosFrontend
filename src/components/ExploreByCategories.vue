@@ -6,12 +6,8 @@
         <h2 class="text-center text-white mb-0">Explora los sueños de HYPNOS por categorias</h2>
       </div>
       <div class="category-buttons mb-4">
-        <button
-          v-for="category in categories"
-          :key="category.id"
-          @click="toggleCategory(category.id)"
-          :class="selectedCategories.includes(category.id) ? 'btn btn-primary' : 'btn btn-secondary'"
-        >
+        <button v-for="category in categories" :key="category.id" @click="toggleCategory(category.id)"
+          :class="selectedCategories.includes(category.id) ? 'btn btn-primary' : 'btn btn-secondary'">
           {{ category.name }}
         </button>
       </div>
@@ -24,8 +20,10 @@
                 <div class="d-flex justify-content-between align-items-center">
                   <span class="alias-header bg-blue text-white">{{ publication.user.alias }}</span>
                   <div class="d-flex align-items-center">
-                    <span class="text-muted me-2">{{ publication.likesCount }}</span>
-                    <i class="bi bi-heart-fill text-danger"></i>
+                    <small class="text-muted">
+                      <i class="bi bi-heart-fill text-danger"></i> {{ publication.likesCount }}
+                      <i class="bi bi-chat ms-3"></i> {{ publication.commentsCount }}
+                    </small>
                   </div>
                 </div>
                 <h5 class="card-title text-dark mt-2">{{ publication.title }}</h5>
@@ -69,6 +67,7 @@ export default {
       loading: false,
       currentPage: 1,
       pageSize: 6,
+      currentUserId: null
     };
   },
   async created() {
@@ -113,10 +112,12 @@ export default {
             text: item.text,
             userId: item.userId,
             likesCount: 0,
+            commentsCount: 0,
             user: item.user,
           };
         });
 
+        await this.updatePublicationCounts();
         this.paginatePublications();
       } catch (error) {
         console.error('Error fetching publications by category:', error);
@@ -129,6 +130,34 @@ export default {
       } catch (error) {
         console.error('Error al obtener el ID de usuario actual:', error);
         return null;
+      }
+    },
+    async updatePublicationCounts() {
+      try {
+        await Promise.all(this.publications.map(async publication => {
+          publication.likesCount = await this.getLikesCount(publication.id);
+          publication.commentsCount = await this.getCommentsCount(publication.id);
+        }));
+      } catch (error) {
+        console.error('Error al actualizar los conteos de publicaciones:', error);
+      }
+    },
+    async getLikesCount(postId) {
+      try {
+        const response = await axiosInstance.get(`/publications/${postId}/likes`);
+        return response.data;
+      } catch (error) {
+        console.error('Error al obtener la cantidad de likes:', error);
+        return 0;
+      }
+    },
+    async getCommentsCount(postId) {
+      try {
+        const response = await axiosInstance.get(`/comments/publication/${postId}/count`);
+        return response.data;
+      } catch (error) {
+        console.error('Error al obtener la cantidad de comentarios:', error);
+        return 0;
       }
     },
     toggleCategory(categoryId) {
@@ -176,7 +205,7 @@ export default {
 </script>
 
 <style scoped>
-.p-3{
+.p-3 {
   background-color: #ac00a4;
 }
 

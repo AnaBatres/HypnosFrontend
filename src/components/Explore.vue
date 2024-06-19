@@ -15,8 +15,10 @@
                 <div class="d-flex justify-content-between align-items-center">
                   <span class="alias-header bg-blue text-white">{{ publication.user.alias }}</span>
                   <div class="d-flex align-items-center">
-                    <span class="text-muted me-2">{{ publication.likesCount }}</span> 
-                    <i class="bi bi-heart-fill text-danger"></i>
+                    <small class="text-muted">
+                      <i class="bi bi-heart-fill text-danger"></i> {{ publication.likesCount }}
+                      <i class="bi bi-chat ms-3"></i> {{ publication.commentsCount }}
+                    </small>
                   </div>
                 </div>
                 <h5 class="card-title text-dark mt-2">{{ publication.title }}</h5>
@@ -91,6 +93,7 @@ export default {
         }
 
         publication.likesCount = await this.getLikesCount(publication.id); 
+        publication.commentsCount = await this.getCommentsCount(publication.id);
       }));
 
       console.log('Publications with user alias:', this.publications);
@@ -128,6 +131,16 @@ export default {
     async getLikesCount(postId) {
       try {
         const response = await axiosInstance.get(`/publications/${postId}/likes`);
+        console.log("likes", response.data);
+        return response.data;
+      } catch (error) {
+        console.error('Error al obtener la cantidad de likes:', error);
+        return 0;
+      }
+    },
+    async getCommentsCount(postId) {
+      try {
+        const response = await axiosInstance.get(`/comments/publication/${postId}/count`);
         console.log("likes", response.data);
         return response.data;
       } catch (error) {

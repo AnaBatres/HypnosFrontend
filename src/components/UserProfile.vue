@@ -16,9 +16,6 @@
                   <i :class="isFollowing ? 'bi bi-person-check-fill' : 'bi bi-person-plus-fill'"></i>
                   {{ isFollowing ? 'Siguiendo' : 'Seguir' }}
                 </button>
-                <button class="btn btn-danger btn-sm" @click="blockUser(user.id)">
-                  <i class="bi bi-person-x-fill"></i> Bloquear
-                </button>
               </div>
               <div class="d-flex justify-content-around mt-4">
                 <div>

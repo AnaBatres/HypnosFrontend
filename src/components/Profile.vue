@@ -119,7 +119,6 @@
 </template>
 
 <script>
-import Cookies from 'js-cookie';
 import { RouterLink } from 'vue-router';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import Navbar from './Navbar.vue';

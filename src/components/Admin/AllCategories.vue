@@ -2,28 +2,35 @@
   <div>
     <admin-navbar />
     <div class="container-fluid vh-100 d-flex flex-column px-5">
+      <div class="input-group my-3">
+        <input type="text" class="form-control" placeholder="Busca la categoría" aria-label="Search"
+          aria-describedby="search-addon" v-model="search" />
+        <button class="btn btn-danger" @click="deleteSelectedCategories">
+          Eliminar
+        </button>
+        <router-link to="/addCategory">
+          <button class="btn btn-success">
+            Añadir Categoría
+          </button>
+        </router-link>
+      </div>
       <div class="row flex-grow-1 overflow-auto">
         <div class="col-12">
-          <div class="input-group my-3">
-            <input type="text" class="form-control" placeholder="Search category" aria-label="Search"
-              aria-describedby="search-addon" v-model="search" />
-            <button class="btn btn-danger" @click="deleteSelectedPublications">
-              Eliminar
-            </button>
-          </div>
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
                 <tr>
-                  <th>Id</th>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Actions</th>
+                  <th></th>
+                  <th>Nombre</th>
+                  <th>Descripción</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="category in filteredCategories" :key="category.id">
-                  <td>{{ category.id }}</td>
+                  <td>
+                    <input type="checkbox" class="form-check-input" v-model="selectedCategories" :value="category.id">
+                  </td>
                   <td>{{ category.name }}</td>
                   <td>{{ category.description }}</td>
                   <td>
@@ -35,37 +42,15 @@
           </div>
         </div>
       </div>
-      <div class="row">
-        <div class="col-12 text-end mt-3">
-          <button class="btn btn-success" @click="showAddCategoryModal">Add Category</button>
-        </div>
-      </div>
-    </div>
-    <div class="modal" tabindex="-1" role="dialog" :class="{ 'show': addCategoryModalOpen }">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Add New Category</h5>
-            <button type="button" class="btn-close" @click="closeAddCategoryModal"></button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="addCategory">
-              <div class="mb-3">
-                <label for="categoryName" class="form-label">Category Name</label>
-                <input type="text" class="form-control" id="categoryName" v-model="newCategoryName">
-              </div>
-              <button type="submit" class="btn btn-primary">Save</button>
-            </form>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
+
 <script>
 import AdminNavbar from './AdminNavbar.vue';
 import axiosInstance from '../../axiosConfig';
+import Swal from 'sweetalert2';
 
 export default {
   components: {
@@ -75,6 +60,8 @@ export default {
     return {
       categories: [],
       search: '',
+      selectedCategories: [],
+      selectAll: false, 
       addCategoryModalOpen: false,
       newCategoryName: ''
     };
@@ -88,24 +75,61 @@ export default {
   },
   methods: {
     async fetchCategories() {
-      const response = await axiosInstance.get('/categories');
-      this.categories = response.data;
-    },
-    async deleteCategory(categoryId) {
-      await axiosInstance.delete(`/categories/${categoryId}`);
-      this.fetchCategories();
-    },
-    async addCategory() {
-      await axiosInstance.post('/categories', { name: this.newCategoryName });
-      this.fetchCategories();
+      try {
+        const response = await axiosInstance.get('/categories');
+        this.categories = response.data;
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
     },
     editCategory(category) {
       this.$router.push({ name: 'editCategory', params: { id: category.id } });
+    },
+    async deleteSelectedCategories() {
+      if (this.selectedCategories.length === 0) {
+        Swal.fire({
+          title: 'Error',
+          text: 'Por favor, selecciona al menos una categoría para eliminar.',
+          icon: 'error'
+        });
+        return;
+      }
+
+      const confirmation = await Swal.fire({
+        title: '¿Estás seguro de que deseas eliminar las categorías seleccionadas?',
+        showCancelButton: true,
+        confirmButtonText: 'Sí',
+        cancelButtonText: 'No',
+        icon: 'warning',
+        reverseButtons: true
+      });
+
+      if (confirmation.isConfirmed) {
+        const deletePromises = this.selectedCategories.map(id =>
+          axiosInstance.delete(`/categories/${id}`)
+        );
+        await Promise.all(deletePromises);
+        await Swal.fire({
+          title: 'Éxito',
+          text: 'Las categorías seleccionadas han sido eliminadas correctamente.',
+          icon: 'success'
+        });
+        this.fetchCategories();
+        this.selectedCategories = [];
+        this.selectAll = false;
     }
   },
-  mounted() {
-    this.fetchCategories();
+  selectAllCategories() {
+    if (this.selectAll) {
+      this.selectedCategories = this.categories.map(category => category.id);
+    } else {
+      this.selectedCategories = [];
+    }
   }
+},
+mounted() {
+  this.fetchCategories();
+}
 };
 </script>
 
@@ -115,11 +139,11 @@ export default {
   padding-right: 30px;
 }
 
-.vh-100 {
-  height: 100vh;
-}
 
-.overflow-auto {
-  overflow: auto;
+.form-check-input {
+  width: 18px;
+  height: 18px;
+  border-width: 3px;
+  border-color: rgb(60, 60, 60);
 }
 </style>
