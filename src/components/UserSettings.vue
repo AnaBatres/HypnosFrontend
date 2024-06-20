@@ -34,7 +34,6 @@
 </template>
 
 <script>
-import axios from 'axios';
 import Navbar from './Navbar.vue';
 import Swal from 'sweetalert2';
 import axiosInstance from '../axiosConfig';

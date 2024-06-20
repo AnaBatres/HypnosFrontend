@@ -103,7 +103,6 @@ export default {
       this.publications[i].commentsCount = commentsCountResponse.data;
     }
   },
-
   methods: {
     async getFollowData() {
       try {
